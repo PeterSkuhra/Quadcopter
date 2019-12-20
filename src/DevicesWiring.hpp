@@ -1,6 +1,8 @@
 #ifndef DEVICES_WIRING_HPP
 #define DEVICES_WIRING_HPP
 
+#include <Arduino.h>
+
 /******************************************************************************
  *  FlySky receiver
  *****************************************************************************/
@@ -49,9 +51,9 @@ const uint8_t kReceiverPins[CHANNEL_COUNT] = {
 /******************************************************************************
  *  Brushless motors
  *****************************************************************************/
-#define MOTOR_FRONT_RIGHT_PIN   4
-#define MOTOR_FRONT_LEFT_PIN    5
-#define MOTOR_BACK_RIGHT_PIN    6
-#define MOTOR_BACK_LEFT_PIN     7
+#define MOTOR_FRONT_RIGHT_PIN   2
+#define MOTOR_FRONT_LEFT_PIN    3
+#define MOTOR_BACK_RIGHT_PIN    5
+#define MOTOR_BACK_LEFT_PIN     6
 
 #endif

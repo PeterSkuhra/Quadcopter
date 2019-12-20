@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #include "IMotor.hpp"
+#include "PWM.hpp"
 
 namespace motor
 {
@@ -15,12 +16,12 @@ namespace motor
 class BrushlessMotor : public IMotor
 {
  public:
-    /**
-     *  Constructor.
-     *
-     *  @param pin  Motor pin for control speed
-     */
-    BrushlessMotor(uint8_t pin);
+     /**
+      *  Constructor.
+      *
+      *  @param pin  Motor pin for control speed
+      */
+     BrushlessMotor(uint8_t pin);
 
     /**
      *  Destructor.
@@ -50,7 +51,9 @@ class BrushlessMotor : public IMotor
      */
     uint16_t GetRPM(uint8_t battery_voltage) override;
 
+
  private:
+
     /**
      *  Pin number of motor control.
      */
@@ -65,6 +68,11 @@ class BrushlessMotor : public IMotor
      *  Current RPM of motor.
      */
     uint16_t rpm_;
+
+    /**
+     *  PWM instance for generate PWM signal on defined pin.
+     */
+    PWM* pwm_;
 };
 
 }
