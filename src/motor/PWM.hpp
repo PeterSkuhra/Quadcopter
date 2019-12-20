@@ -34,13 +34,13 @@ public:
 
     bool SetPeriod(uint16_t period_us);
 
-    uint16_t GetPeriod() const;
+    uint32_t GetPeriod() const;
 
-    uint16_t GetMaxPulseMicroseconds() const;
+    uint32_t GetMaxPulseMicroseconds() const;
 
-    void WritePulseMicroseconds(uint16_t us);
+    void WritePulseMicroseconds(uint32_t us);
 
-    uint16_t GetCurrentPulseMicroseconds() const;
+    uint32_t GetCurrentPulseMicroseconds() const;
 
     void WritePulsePercent(uint8_t percent);
 

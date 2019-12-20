@@ -63,12 +63,17 @@ bool PWM::SetPeriod(uint16_t period_us)
 
 }
 
-uint16_t PWM::GetPeriod() const
+uint32_t PWM::GetPeriod() const
 {
     return period_us_;
 }
 
-void PWM::WritePulseMicroseconds(uint16_t us)
+uint32_t PWM::GetMaxPulseMicroseconds() const
+{
+    return max_pulse_us_;
+}
+
+void PWM::WritePulseMicroseconds(uint32_t us)
 {
     pulse_us_ = constrain(us, 0, period_us_);
     pulse_percent_ = (pulse_us_ * 100) / period_us_;
@@ -116,7 +121,7 @@ void PWM::WritePulseMicroseconds(uint16_t us)
     }
 }
 
-uint16_t PWM::GetCurrentPulseMicroseconds() const
+uint32_t PWM::GetCurrentPulseMicroseconds() const
 {
     return pulse_us_;
 }
