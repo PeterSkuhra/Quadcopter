@@ -216,7 +216,7 @@ inline void MPU6050::RequestFromRegister(const uint8_t register_address,
 
 bool MPU6050::CalibrateAccel(uint16_t samples)
 {
-    for (int i = 0; i < samples; ++i) {
+    for (uint16_t i = 0; i < samples; ++i) {
         RequestFromRegister(ACCEL_XOUT_H, ACCEL_REGISTERS_COUNT);
 
         acc_raw_.x = (Wire.read() << 8 | Wire.read()) / accel_lsb_sensitivity_;
@@ -239,7 +239,7 @@ bool MPU6050::CalibrateAccel(uint16_t samples)
 
 bool MPU6050::CalibrateGyro(uint16_t samples)
 {
-    for (int i = 0; i < samples; ++i) {
+    for (uint16_t i = 0; i < samples; ++i) {
         RequestFromRegister(GYRO_XOUT_H, GYRO_REGISTERS_COUNT);
 
         gyro_raw_.x = (Wire.read() << 8 | Wire.read());

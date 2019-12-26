@@ -1,6 +1,8 @@
 #ifndef IMOTOR_HPP
 #define IMOTOR_HPP
 
+#include <Arduino.h>
+
 namespace motor
 {
 

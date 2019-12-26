@@ -1,2 +1,0 @@
-# Quadcopter
-My Bachelor Thesis.

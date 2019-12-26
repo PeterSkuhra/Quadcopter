@@ -1,5 +1,6 @@
 #include "BrushlessMotor.hpp"
 
+#include <ArduinoSTL.h>
 #include <TimerOne.h>
 
 #define MOTOR_KV            920     // rpm/V
@@ -12,13 +13,18 @@
 #define MIN_PWM             0
 #define MAX_PWM             1023
 
-motor::BrushlessMotor::BrushlessMotor(uint8_t pin) :
+
+motor::BrushlessMotor::BrushlessMotor(uint8_t pin, uint16_t frequency) :
     pin_(pin),
+    frequency_(frequency),
     speed_(0),
     rpm_(0)
 {
-    Timer1.initialize(PWM_PERIOD_US);
-    SetSpeed(0);
+    //pinMode(pin_, OUTPUT);
+
+    pwm_ = PWM::GetInstance(pin);
+
+    Init(pin, frequency);
 }
 
 motor::BrushlessMotor::~BrushlessMotor()
@@ -34,6 +40,8 @@ void motor::BrushlessMotor::SetSpeed(uint16_t speed)
     speed_ = map(speed, MIN_PULSE, MAX_PULSE, MIN_PWM, MAX_PWM);
 
     Timer1.pwm(pin_, speed_);
+    // !!! CELE ZLE, lebo funguju len 2 piny s potrebnou frekvenciou
+    // tie dalsie nepojdu!!! :(
 }
 
 uint16_t motor::BrushlessMotor::GetSpeed() const
@@ -49,4 +57,40 @@ uint16_t motor::BrushlessMotor::GetRPM(uint8_t battery_voltage)
     rpm_ = MOTOR_KV * battery_voltage * rpm_percent_coefficient;
 
     return rpm_;
+}
+
+void motor::BrushlessMotor::Init(uint8_t pin, uint16_t frequency)
+{
+    switch (pin) {
+        case 11:
+            break;
+        case 12:
+            break;
+        case 13:
+            break;
+
+        case 5:
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            break;
+
+        case 46:
+            break;
+        case 45:
+            break;
+        case 44:
+            break;
+
+        default:
+            break;
+    }
 }

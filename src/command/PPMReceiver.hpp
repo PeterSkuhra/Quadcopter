@@ -13,7 +13,7 @@ namespace command
 class PPMReceiver : public IReceiver
 {
 public:
-    PPMReceiver(uint8_t pins[]);
+    PPMReceiver(uint8_t pins[], uint8_t size);
 
     ~PPMReceiver();
 

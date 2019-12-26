@@ -6,11 +6,11 @@
 using namespace command;
 
 
-std::vector<PPMPinListener*> ppm_listener_instances;
+static std::vector<PPMPinListener*> ppm_listener_instances;
 
 static void InterruptHandler(void)
 {
-    for (int i = 0; i < ppm_listener_instances.size(); ++i) {
+    for (uint8_t i = 0; i < ppm_listener_instances.size(); ++i) {
         ppm_listener_instances.at(i)->HandleInterrupt();
     }
 }
@@ -50,7 +50,10 @@ void PPMPinListener::HandleInterrupt()
 
 void PPMPinListener::ProcessPPM()
 {
-    time_.current = micros();
+    time_.current = micros();       // Moznost na optimalizaciu!!
+    // vytvorit metodu SetCurrentTime(time)
+    // a zavolat ju iba raz v preruseni InterruptHandler
+    // ale mozno iba trepem :D
 
     if (digitalRead(pin_) == HIGH) {
         if (!update_started_) {
