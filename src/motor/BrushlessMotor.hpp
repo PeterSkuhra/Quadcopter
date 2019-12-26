@@ -31,15 +31,12 @@ namespace motor
 class BrushlessMotor : public IMotor
 {
  public:
-
-    //static IMotor* GetMotor(uint8_t pin);
-
-    /**
-    *  Constructor.
-    *
-    *  @param pin  Motor pin for control speed
-    */
-    BrushlessMotor(uint8_t pin, uint16_t = DEFAULT_FREQUENCY);
+     /**
+      *  Constructor.
+      *
+      *  @param pin  Motor pin for control speed
+      */
+     BrushlessMotor(uint8_t pin);
 
     /**
      *  Destructor.
@@ -69,19 +66,9 @@ class BrushlessMotor : public IMotor
      */
     uint16_t GetRPM(uint8_t battery_voltage) override;
 
-    void SetFrequency(uint32_t frequency);
-
-    void SetPeriod(uint32_t period);
-
 
  private:
 
-    void Init(uint8_t pin, uint16_t frequency);
-
-
- private:
-
-     PWM* pwm_;
     /**
      *  Pin number of motor control.
      */
@@ -98,6 +85,11 @@ class BrushlessMotor : public IMotor
      *  Current RPM of motor.
      */
     uint16_t rpm_;
+
+    /**
+     *  PWM instance for generate PWM signal on defined pin.
+     */
+    PWM* pwm_;
 };
 
 }
