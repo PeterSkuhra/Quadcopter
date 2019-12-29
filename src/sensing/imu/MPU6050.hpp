@@ -85,7 +85,7 @@ class MPU6050 : public IIMU,
     inline void WriteToRegister(const uint8_t register_address,
                                 const uint8_t data,
                                 const bool = true);
-    inline void RequestFromRegister(const uint8_t register_address,
+    inline bool RequestFromRegister(const uint8_t register_address,
                                     const uint8_t bytes_count);
 
     bool CalibrateAccel(uint16_t = DEAFULT_SAMPLES);
