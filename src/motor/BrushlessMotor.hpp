@@ -74,7 +74,7 @@ class BrushlessMotor : public IMotor
      */
     uint8_t pin_;
 
-    uint16_t frequency_;
+    float period_;
 
     /**
      *  Current speed of motor in range [1000, 2000]

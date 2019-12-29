@@ -1,8 +1,9 @@
 #include "BrushlessMotor.hpp"
 
 #define MOTOR_KV            920     // rpm/V
-#define ESC_RESPONSE_RATE   490     // Hz
-#define PWM_PERIOD_US       2040    // 1 / 490 Hz ~= 2040 µs
+#define PWM_PERIOD_US       2048    // 2^11
+#define ESC_RESPONSE_RATE   488     // 1 / 2048e-6 ~= 488Hz
+
 
 #define MIN_PULSE           1000    // µs
 #define MAX_PULSE           2000    // µs
@@ -13,7 +14,7 @@
 
 motor::BrushlessMotor::BrushlessMotor(uint8_t pin) :
     pin_(pin),
-    frequency_(frequency),
+    period_(PWM_PERIOD_US / 1000000),
     speed_(0),
     rpm_(0)
 {
@@ -54,38 +55,38 @@ uint16_t motor::BrushlessMotor::GetRPM(uint8_t battery_voltage)
     return rpm_;
 }
 
-void motor::BrushlessMotor::Init(uint8_t pin, uint16_t frequency)
-{
-    switch (pin) {
-        case 11:
-            break;
-        case 12:
-            break;
-        case 13:
-            break;
-
-        case 5:
-            break;
-        case 2:
-            break;
-        case 3:
-            break;
-
-        case 6:
-            break;
-        case 7:
-            break;
-        case 8:
-            break;
-
-        case 46:
-            break;
-        case 45:
-            break;
-        case 44:
-            break;
-
-        default:
-            break;
-    }
-}
+// void motor::BrushlessMotor::Init(uint8_t pin, uint16_t frequency)
+// {
+//     switch (pin) {
+//         case 11:
+//             break;
+//         case 12:
+//             break;
+//         case 13:
+//             break;
+//
+//         case 5:
+//             break;
+//         case 2:
+//             break;
+//         case 3:
+//             break;
+//
+//         case 6:
+//             break;
+//         case 7:
+//             break;
+//         case 8:
+//             break;
+//
+//         case 46:
+//             break;
+//         case 45:
+//             break;
+//         case 44:
+//             break;
+//
+//         default:
+//             break;
+//     }
+// }
