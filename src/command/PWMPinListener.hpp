@@ -1,18 +1,18 @@
-#ifndef PPM_PIN_LISTENER_HPP
-#define PPM_PIN_LISTENER_HPP
+#ifndef PWM_PIN_LISTENER_HPP
+#define PWM_PIN_LISTENER_HPP
 
 #include <Arduino.h>
 
 namespace command
 {
 
-class PPMPinListener
+class PWMPinListener
 {
 public:
-    
-    PPMPinListener(uint8_t pin);
 
-    ~PPMPinListener();
+    PWMPinListener(uint8_t pin);
+
+    ~PWMPinListener();
 
     uint16_t ReadChannel() const;
 
@@ -21,7 +21,7 @@ public:
 
 private:
 
-    inline void ProcessPPM();
+    inline void ProcessPWM();
 
 private:
 

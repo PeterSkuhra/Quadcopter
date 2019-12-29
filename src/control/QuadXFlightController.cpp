@@ -62,7 +62,7 @@ QuadXFlightController::QuadXFlightController(
 
 QuadXFlightController::~QuadXFlightController()
 {
-
+    
 }
 
 void QuadXFlightController::Control()

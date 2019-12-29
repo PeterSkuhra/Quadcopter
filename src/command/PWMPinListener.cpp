@@ -1,4 +1,4 @@
-#include "PPMPinListener.hpp"
+#include "PWMPinListener.hpp"
 
 #include <ArduinoSTL.h>
 #include <EnableInterrupt.h>
@@ -6,49 +6,49 @@
 using namespace command;
 
 
-static std::vector<PPMPinListener*> ppm_listener_instances;
+static std::vector<PWMPinListener*> pwm_listener_instances;
 
 static void InterruptHandler(void)
 {
-    for (uint8_t i = 0; i < ppm_listener_instances.size(); ++i) {
-        ppm_listener_instances.at(i)->HandleInterrupt();
+    for (uint8_t i = 0; i < pwm_listener_instances.size(); ++i) {
+        pwm_listener_instances.at(i)->HandleInterrupt();
     }
 }
 
 
-PPMPinListener::PPMPinListener(uint8_t pin) :
+PWMPinListener::PWMPinListener(uint8_t pin) :
     pin_(pin),
     value_(0),
     update_started_(false)
 {
     pinMode(pin_, INPUT);
 
-    ppm_listener_instances.push_back(this);
+    pwm_listener_instances.push_back(this);
     enableInterrupt(pin_, InterruptHandler, CHANGE);
 }
 
-PPMPinListener::~PPMPinListener()
+PWMPinListener::~PWMPinListener()
 {
     disableInterrupt(pin_);
 
-    for (int i = 0; i < ppm_listener_instances.size(); ++i) {
-        if (ppm_listener_instances.at(i) == this) {
-            ppm_listener_instances.erase(i);
+    for (uint8_t i = 0; i < pwm_listener_instances.size(); ++i) {
+        if (pwm_listener_instances.at(i) == this) {
+            pwm_listener_instances.erase(i);
         }
     }
 }
 
-uint16_t PPMPinListener::ReadChannel() const
+uint16_t PWMPinListener::ReadChannel() const
 {
     return value_;
 }
 
-void PPMPinListener::HandleInterrupt()
+void PWMPinListener::HandleInterrupt()
 {
-    ProcessPPM();
+    ProcessPWM();
 }
 
-void PPMPinListener::ProcessPPM()
+void PWMPinListener::ProcessPWM()
 {
     time_.current = micros();       // Moznost na optimalizaciu!!
     // vytvorit metodu SetCurrentTime(time)

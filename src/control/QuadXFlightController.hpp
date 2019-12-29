@@ -13,6 +13,8 @@ class QuadXFlightController : public IController
 {
 public:
 
+    // TODO: spravit prepravku na zariadenia
+
     QuadXFlightController(sensing::imu::IIMU* imu,
                           sensing::ISensor* battery_voltage_sensor,
                           command::IReceiver* receiver,

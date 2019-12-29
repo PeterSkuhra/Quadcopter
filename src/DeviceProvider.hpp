@@ -26,6 +26,8 @@ public:
 
     static DeviceProvider* GetInstance();
 
+    ~DeviceProvider();
+
     command::IReceiver* GetReceiver() const;
 
     display::ISender* GetSender() const;

@@ -25,7 +25,7 @@ bool PWM::initialized_(false);
 
 PWM* PWM::GetInstance(uint8_t pin)
 {
-    const std::map<uint8_t, PWM*>::iterator it = instances_.find(pin);
+    const auto &it(instances_.find(pin));
 
     if (it != instances_.end()) {
         return (PWM*)(it->second);

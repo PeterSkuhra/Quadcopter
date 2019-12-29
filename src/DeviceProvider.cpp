@@ -2,7 +2,7 @@
 
 #include "DevicesWiring.hpp"
 
-#include "command/PPMReceiver.hpp"
+#include "command/PWMReceiver.hpp"
 #include "display/IBusSender.hpp"
 #include "sensing/imu/MPU6050.hpp"
 #include "sensing/pressure/BMP180.hpp"
@@ -10,12 +10,28 @@
 #include "motor/BrushlessMotor.hpp"
 #include "display/OLEDManager.hpp"
 
-#define MOTOR_COUNT     4
 
 DeviceProvider* DeviceProvider::GetInstance()
 {
     static DeviceProvider instance;
     return &instance;
+}
+
+DeviceProvider::~DeviceProvider()
+{
+    delete receiver_;
+    delete sender_;
+    delete imu_;
+    delete barometer_;
+    delete thermometer_;
+    delete battery_voltage_sensor_;
+
+    for (uint8_t i = 0; i < MOTOR_COUNT; ++i) {
+        delete [] motors_[i];
+    }
+    delete [] motors_;
+
+    delete display_manager_;
 }
 
 command::IReceiver* DeviceProvider::GetReceiver() const
@@ -65,7 +81,7 @@ display::IDisplayManager* DeviceProvider::GetDisplayManager() const
 
 DeviceProvider::DeviceProvider()
 {
-    receiver_ = new command::PPMReceiver(kReceiverPins);
+    receiver_ = new command::PWMReceiver(kReceiverPins);
 
     sender_ = new display::IBusSender(Serial2);
 
