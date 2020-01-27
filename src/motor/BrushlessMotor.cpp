@@ -20,7 +20,7 @@ motor::BrushlessMotor::BrushlessMotor(uint8_t pin) :
 {
     pwm_ = PWM::GetInstance(pin);
 
-    SetSpeed(0);
+    //SetSpeed(MIN_PULSE);
 }
 
 motor::BrushlessMotor::~BrushlessMotor()

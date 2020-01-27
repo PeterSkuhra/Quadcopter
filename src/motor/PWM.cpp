@@ -1,6 +1,8 @@
 #include "PWM.hpp"
 
-const uint8_t PWM::timers_pins_[TIMERS_16BIT_COUNT][PWM_PIN_PER_TIMER] =
+#define MAX_TIMER_VALUE     65535   // (2^16) - 1
+
+const uint8_t PWM::kTimersPins_[TIMERS_16BIT_COUNT][PWM_PIN_PER_TIMER] =
 {
     // A, B, C
     {11, 12, 13},   //Timer1 pins
@@ -9,7 +11,7 @@ const uint8_t PWM::timers_pins_[TIMERS_16BIT_COUNT][PWM_PIN_PER_TIMER] =
     {46, 45, 44}    //Timer5 pins
 };
 
-const uint16_t PWM::prescaler[PRESCALER_COUNT] =
+const uint16_t PWM::kPrescaler_[PRESCALER_COUNT] =
 {
     1,
     8,
@@ -41,11 +43,15 @@ PWM::~PWM()
     instances_.erase(pin_);
 
     // TODO: dorobit detach pinu na registre
+    // zrusit nastavenu konfigurciu casovacov a ich pinov,
+    // aby sa dali pouzit inde.
 }
 
 bool PWM::SetFrequency(float frequency)
 {
-    // TODO
+    // TODO     f = 1 / T
+    // Zistit ci je mozne nastavit zvolenu frekvenciu.
+    // Ak ano, tak ju nastavit a vratit 1, inak vratit 0
     return false;
 }
 
@@ -56,11 +62,23 @@ float PWM::GetFrequency() const
 
 bool PWM::SetPeriod(uint16_t period_us)
 {
-    // TODO
+    // TODO: skontrolovat, ci je mozne nastavit zvolenu periodu.
+    // Ak ano, tak nastavit a vratit 1, inak vratit 0
+
+    uint16_t input_capture;
+
+    for (uint8_t i = 0; i < PRESCALER_COUNT; ++i) {
+        input_capture = (period_us * F_CPU) / kPrescaler_[i];
+    // skontrolovat ci je to cele cislo a zaroven mensie ako max. casovaca
+            //if (input_capture % )
+    }
+
+    period_us_ = period_us;
+    max_pulse_us_ = period_us_;
+
+
 
     return false;
-
-
 }
 
 uint32_t PWM::GetPeriod() const
@@ -186,9 +204,56 @@ void PWM::InitFastPWMMode(Timers16Bit timer)
     }
 }
 
-void PWM::SetPrescaler(Timers16Bit timer, uint16_t prescaler)
+void PWM::SetPrescaler(Timers16Bit timer, Prescalers prescaler)
 {
-    // TODO
+    uint8_t prescaler_bits;
+
+    switch (prescaler) {
+        case NO_PRESCALER:
+            prescaler_bits = 0b001;
+            break;
+
+        case PRESCALER_8:
+            prescaler_bits = 0b010;
+            break;
+
+        case PRESCALER_64:
+            prescaler_bits = 0b011;
+            break;
+
+        case PRESCALER_256:
+            prescaler_bits = 0b100;
+            break;
+
+        case PRESCALER_1024:
+            prescaler_bits = 0b101;
+            break;
+
+        default:
+            prescaler_bits = 0b000;
+            break;
+    }
+
+    switch (timer) {
+        case TIMER1:
+            TCCR1B |= prescaler_bits;
+            break;
+
+        case TIMER3:
+            TCCR3B |= prescaler_bits;
+            break;
+
+        case TIMER4:
+            TCCR4B |= prescaler_bits;
+            break;
+
+        case TIMER5:
+            TCCR5B |= prescaler_bits;
+            break;
+
+        default:
+            return;
+    }
 }
 
 Timers16Bit PWM::WhichTimer(uint8_t pin)
@@ -252,7 +317,7 @@ PWM::PWM(uint8_t pin) :
     period_us_(1000000),
     max_pulse_us_(1000000)
 {
-    for (auto& rows : timers_pins_) {
+    for (auto& rows : kTimersPins_) {
         for (auto& column : rows) {
             if (column == pin) {
                 if (!initialized_) {
@@ -260,6 +325,7 @@ PWM::PWM(uint8_t pin) :
                 }
 
                 InitOutput(pin);
+                InitFastPWMMode(WhichTimer(pin));
             }
         }
     }

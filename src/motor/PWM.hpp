@@ -20,6 +20,15 @@ enum Timers16Bit
     NO_TIMER = 255
 };
 
+enum Prescalers
+{
+    NO_PRESCALER = 0,
+    PRESCALER_8 = 8,
+    PRESCALER_64 = 64,
+    PRESCALER_256 = 256,
+    PRESCALER_1024 = 1024
+};
+
 class PWM
 {
 public:
@@ -52,7 +61,7 @@ private:
 
     static void InitFastPWMMode(Timers16Bit timer);
 
-    static void SetPrescaler(Timers16Bit timer, uint16_t prescaler);
+    static void SetPrescaler(Timers16Bit timer, Prescalers prescaler);
 
     static Timers16Bit WhichTimer(uint8_t pin);
 
@@ -66,9 +75,9 @@ private:
 
 
 private:
-    static const uint8_t timers_pins_[TIMERS_16BIT_COUNT][PWM_PIN_PER_TIMER];
+    static const uint8_t kTimersPins_[TIMERS_16BIT_COUNT][PWM_PIN_PER_TIMER];
 
-    static const uint16_t prescaler[PRESCALER_COUNT];
+    static const uint16_t kPrescaler_[PRESCALER_COUNT];
 
     static std::map<uint8_t, PWM*> instances_;
 
