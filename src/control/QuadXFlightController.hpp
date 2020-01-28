@@ -15,6 +15,11 @@ public:
 
     // TODO: spravit prepravku na zariadenia
 
+    //===========TEST=====================================
+    QuadXFlightController(command::IReceiver* receiver,
+                          motor::IMotor** motors);
+    //====================================================
+
     QuadXFlightController(sensing::imu::IIMU* imu,
                           sensing::ISensor* battery_voltage_sensor,
                           command::IReceiver* receiver,
@@ -57,6 +62,15 @@ private:
     display::ISender* sender_;
 
     motor::IMotor** motors_;
+
+    struct ReceiverData {
+        uint16_t thrust;
+        uint16_t roll;
+        uint16_t pitch;
+        uint16_t yaw;
+    } receiver_data_;
+
+    uint16_t motors_speeds_[4];
 
 };
 

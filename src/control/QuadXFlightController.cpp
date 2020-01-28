@@ -2,6 +2,19 @@
 
 using namespace control;
 
+QuadXFlightController::QuadXFlightController(
+    command::IReceiver* receiver,
+    motor::IMotor** motors)
+{
+    QuadXFlightController(nullptr,
+                          nullptr,
+                          nullptr,
+                          nullptr,
+                          receiver,
+                          nullptr,
+                          motors);
+}
+
 
 QuadXFlightController::QuadXFlightController(
     sensing::imu::IIMU* imu,
@@ -62,11 +75,39 @@ QuadXFlightController::QuadXFlightController(
 
 QuadXFlightController::~QuadXFlightController()
 {
-    
+
 }
 
 void QuadXFlightController::Control()
 {
     imu_->Update();
     barometer_->Update();
+
+
+    //========TEST=============================================================
+    receiver_data_.thrust = receiver_->ReadChannel(1);
+    receiver_data_.roll = receiver_->ReadChannel(4);
+    receiver_data_.pitch = receiver_->ReadChannel(3);
+    receiver_data_.yaw = receiver_->ReadChannel(2);
+
+    // Front right
+    motors_speeds_[0] = receiver_data_.thrust + receiver_data_.yaw +
+                       receiver_data_.pitch + receiver_data_.roll;
+    // Front left
+    motors_speeds_[1] = receiver_data_.thrust - receiver_data_.yaw +
+                       receiver_data_.pitch - receiver_data_.roll;
+
+    // Back right
+    motors_speeds_[2] = receiver_data_.thrust - receiver_data_.yaw -
+                       receiver_data_.pitch + receiver_data_.roll;
+
+    // Back left
+    motors_speeds_[3] = receiver_data_.thrust + receiver_data_.yaw -
+                       receiver_data_.pitch - receiver_data_.roll;
+
+    for (uint8_t i = 0; i < 4; ++i) {
+        motors_[i]->SetSpeed(motors_speeds_[i]);
+    }
+
+    //=========================================================================
 }

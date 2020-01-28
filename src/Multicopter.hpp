@@ -5,9 +5,6 @@
 #include "control/IController.hpp"
 #include "display/IDisplayManager.hpp"
 
-#include "sensing/imu/MPU6050.hpp"
-#include "command/IReceiver.hpp"
-#include "display/ISender.hpp"
 
 class Multicopter : public IExecutable
 {
