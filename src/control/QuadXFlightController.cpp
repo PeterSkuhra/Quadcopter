@@ -85,11 +85,22 @@ void QuadXFlightController::Control()
 
 
     //========TEST=============================================================
+    UpdateChannels();
+    CalculateMotorsSpeeds();
+    WriteMotorsSpeeds();
+    //=========================================================================
+}
+
+void QuadXFlightController::UpdateChannels()
+{
     receiver_data_.thrust = receiver_->ReadChannel(1);
     receiver_data_.roll = receiver_->ReadChannel(4);
     receiver_data_.pitch = receiver_->ReadChannel(3);
     receiver_data_.yaw = receiver_->ReadChannel(2);
+}
 
+void QuadXFlightController::CalculateMotorsSpeeds()
+{
     // Front right
     motors_speeds_[0] = receiver_data_.thrust + receiver_data_.yaw +
                        receiver_data_.pitch + receiver_data_.roll;
@@ -104,10 +115,11 @@ void QuadXFlightController::Control()
     // Back left
     motors_speeds_[3] = receiver_data_.thrust + receiver_data_.yaw -
                        receiver_data_.pitch - receiver_data_.roll;
+}
 
+void QuadXFlightController::WriteMotorsSpeeds()
+{
     for (uint8_t i = 0; i < 4; ++i) {
         motors_[i]->SetSpeed(motors_speeds_[i]);
     }
-
-    //=========================================================================
 }

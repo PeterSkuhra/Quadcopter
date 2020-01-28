@@ -48,7 +48,9 @@ public:
 
 private:
 
-    // void UpdateChannels();
+    void UpdateChannels();
+    void CalculateMotorsSpeeds();
+    void WriteMotorsSpeeds();
 
 private:
 
