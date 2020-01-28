@@ -2,6 +2,7 @@
 
 #define MAX_TIMER_VALUE     65535   // (2^16) - 1
 
+
 const uint8_t PWM::kTimersPins_[TIMERS_16BIT_COUNT][PWM_PIN_PER_TIMER] =
 {
     // A, B, C
@@ -33,62 +34,70 @@ PWM* PWM::GetInstance(uint8_t pin)
         return (PWM*)(it->second);
     }
 
-    PWM* instance = new PWM(pin);
-    instances_[pin] = instance;
-    return instance;
+    for (auto& rows : kTimersPins_) {
+        for (auto& column : rows) {
+            if (column == pin) {
+                PWM* instance = new PWM(pin);
+                instances_[pin] = instance;
+                return instance;
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 PWM::~PWM()
 {
     instances_.erase(pin_);
 
-    // TODO: dorobit detach pinu na registre
-    // zrusit nastavenu konfigurciu casovacov a ich pinov,
-    // aby sa dali pouzit inde.
+    DisablePWM(WhichTimer(pin_));
 }
 
-bool PWM::SetFrequency(float frequency)
+bool PWM::SetFrequencyHz(uint16_t frequency)
 {
-    // TODO     f = 1 / T
-    // Zistit ci je mozne nastavit zvolenu frekvenciu.
-    // Ak ano, tak ju nastavit a vratit 1, inak vratit 0
-    return false;
+    uint16_t period_us = (1 / frequency) * 1000000;
+    bool is_valid_frequency = SetPeriodMicroseconds(period_us);
+
+    if (is_valid_frequency) {
+        frequency_hz_ = frequency;
+    }
+
+    return is_valid_frequency;
 }
 
-float PWM::GetFrequency() const
+uint16_t PWM::GetFrequencyHz() const
 {
     return frequency_hz_;
 }
 
-bool PWM::SetPeriod(uint16_t period_us)
+bool PWM::SetPeriodMicroseconds(uint16_t period_us)
 {
-    // TODO: skontrolovat, ci je mozne nastavit zvolenu periodu.
-    // Ak ano, tak nastavit a vratit 1, inak vratit 0
-
-    uint16_t input_capture;
+    float input_capture;
 
     for (uint8_t i = 0; i < PRESCALER_COUNT; ++i) {
-        input_capture = (period_us * F_CPU) / kPrescaler_[i];
-    // skontrolovat ci je to cele cislo a zaroven mensie ako max. casovaca
-            //if (input_capture % )
+        input_capture = ((period_us / 1000000) * F_CPU) / kPrescaler_[i];
+
+        if ((roundf(input_capture) == input_capture) &&
+                (input_capture <= MAX_TIMER_VALUE)) {
+
+            period_us_ = static_cast<uint16_t>(input_capture);
+            frequency_hz_ = 1 / (period_us * 1000000);
+
+            prescaler_ = kPrescaler_[i];
+            SetPrescaler(WhichTimer(pin_), kPrescaler_[i]);
+            SetInputCapture(WhichTimer(pin_), period_us_);
+
+            return true;
+        }
     }
-
-    period_us_ = period_us;
-    max_pulse_us_ = period_us_;
-
-
 
     return false;
 }
 
-uint32_t PWM::GetPeriod() const
+uint32_t PWM::GetPeriodMicroseconds() const
 {
     return period_us_;
-}
-
-uint32_t PWM::GetMaxPulseMicroseconds() const
-{
-    return max_pulse_us_;
 }
 
 void PWM::WritePulseMicroseconds(uint32_t us)
@@ -174,6 +183,8 @@ void PWM::ResetRegisters()
     //  Timer 5 control registers
     TCCR5A = 0;
     TCCR5B = 0;
+
+    initialized_ = true;
 }
 
 void PWM::InitFastPWMMode(Timers16Bit timer)
@@ -204,34 +215,34 @@ void PWM::InitFastPWMMode(Timers16Bit timer)
     }
 }
 
-void PWM::SetPrescaler(Timers16Bit timer, Prescalers prescaler)
+bool PWM::SetPrescaler(Timers16Bit timer, uint16_t prescaler)
 {
     uint8_t prescaler_bits;
 
     switch (prescaler) {
-        case NO_PRESCALER:
+        case 1:
             prescaler_bits = 0b001;
             break;
 
-        case PRESCALER_8:
+        case 8:
             prescaler_bits = 0b010;
             break;
 
-        case PRESCALER_64:
+        case 64:
             prescaler_bits = 0b011;
             break;
 
-        case PRESCALER_256:
+        case 256:
             prescaler_bits = 0b100;
             break;
 
-        case PRESCALER_1024:
+        case 1024:
             prescaler_bits = 0b101;
             break;
 
         default:
             prescaler_bits = 0b000;
-            break;
+            return false;
     }
 
     switch (timer) {
@@ -252,8 +263,10 @@ void PWM::SetPrescaler(Timers16Bit timer, Prescalers prescaler)
             break;
 
         default:
-            return;
+            return false;
     }
+
+    return true;
 }
 
 Timers16Bit PWM::WhichTimer(uint8_t pin)
@@ -284,10 +297,8 @@ Timers16Bit PWM::WhichTimer(uint8_t pin)
     }
 }
 
-void PWM::SetInputCapture(uint8_t pin, uint16_t value)
+void PWM::SetInputCapture(Timers16Bit timer, uint16_t value)
 {
-    Timers16Bit timer = WhichTimer(pin);
-
     switch (timer) {
         case TIMER1:
             ICR1 = value;
@@ -312,23 +323,60 @@ void PWM::SetInputCapture(uint8_t pin, uint16_t value)
     }
 }
 
-PWM::PWM(uint8_t pin) :
-    frequency_hz_(1),
-    period_us_(1000000),
-    max_pulse_us_(1000000)
+void PWM::DisablePWM(Timers16Bit timer)
 {
-    for (auto& rows : kTimersPins_) {
-        for (auto& column : rows) {
-            if (column == pin) {
-                if (!initialized_) {
-                    ResetRegisters();
-                }
+    switch (timer) {
+        case TIMER1:
+            OCR1A = 0;
+            OCR1B = 0;
+            OCR1C = 0;
+            ICR1 = 0;
+            TCCR1A = 0;
+            TCCR1B = 0;
+            break;
 
-                InitOutput(pin);
-                InitFastPWMMode(WhichTimer(pin));
-            }
-        }
+        case TIMER3:
+            OCR3A = 0;
+            OCR3B = 0;
+            OCR3C = 0;
+            ICR3 = 0;
+            TCCR3A = 0;
+            TCCR3B = 0;
+            break;
+
+        case TIMER4:
+            OCR4A = 0;
+            OCR4B = 0;
+            OCR4C = 0;
+            ICR4 = 0;
+            TCCR4A = 0;
+            TCCR4B = 0;
+            break;
+
+        case TIMER5:
+            OCR5A = 0;
+            OCR5B = 0;
+            OCR5C = 0;
+            ICR5 = 0;
+            TCCR5A = 0;
+            TCCR5B = 0;
+            break;
+
+        default:
+            return;
     }
+}
+
+PWM::PWM(uint8_t pin) :
+    frequency_hz_(0),
+    period_us_(0)
+{
+    if (!initialized_) {
+        ResetRegisters();
+    }
+
+    InitOutput(pin);
+    InitFastPWMMode(WhichTimer(pin));
 }
 
 void PWM::InitOutput(uint8_t pin)

@@ -9,23 +9,13 @@
 namespace motor
 {
 
-#define DEFAULT_FREQUENCY   50  // Hz
-
 /******************************************************************************
  *  Class represents motor which is controlled
  *  with ESC (Electronic speed controller).
  *
- *  The multiton pattern is aplied.
- *
- *  Class uses 16-bit Timers (Arduino Mega):
- *  Timer 1 controls pins 11, 12, 13
- *  Timer 3 controls pins 2, 3, 5
- *  Timer 4 controls pins 6, 7, 8
- *  Timer 5 controls pins 38, 39, 40
- *
- *  If you will use some pin from any Timer, you shouldn't use other pins from
- *  this group for other functions.
- *  Any pin configuration also affects others pins from group.
+ *  You can set speed in standard range in RC [1000, 2000].
+ *  You can also check the current number of RPMs according
+ *  to the battery voltage and the motor's KV parameter.
  *
  *****************************************************************************/
 class BrushlessMotor : public IMotor
@@ -73,8 +63,6 @@ class BrushlessMotor : public IMotor
      *  Pin number of motor control.
      */
     uint8_t pin_;
-
-    float period_;
 
     /**
      *  Current speed of motor in range [1000, 2000]
