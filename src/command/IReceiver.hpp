@@ -1,10 +1,12 @@
 #ifndef IRECEIVER_HPP
 #define IRECEIVER_HPP
 
+#include "ICalibratable.hpp"
+
 namespace command
 {
 
-class IReceiver
+class IReceiver : public ICalibratable
 {
 public:
     virtual ~IReceiver() = default;

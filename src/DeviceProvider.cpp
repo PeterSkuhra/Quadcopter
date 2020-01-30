@@ -2,7 +2,7 @@
 
 #include "DevicesWiring.hpp"
 
-#include "command/PWMReceiver.hpp"
+#include "command/FlySkyReceiver.hpp"
 #include "display/IBusSender.hpp"
 #include "sensing/imu/MPU6050.hpp"
 #include "sensing/pressure/BMP180.hpp"
@@ -81,7 +81,7 @@ display::IDisplayManager* DeviceProvider::GetDisplayManager() const
 
 DeviceProvider::DeviceProvider()
 {
-    receiver_ = new command::PWMReceiver(kReceiverPins);
+    receiver_ = new command::FlySkyReceiver(kReceiverPins);
 
     sender_ = new display::IBusSender(Serial2);
 
