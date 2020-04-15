@@ -19,10 +19,23 @@ namespace command
 
 #define CALIBRATABLE_CHANNEL_COUNT  4
 
+// // Transmitter sticks - channel number
+// #define THRUST  1
+// #define YAW     2
+// #define PITCH   3
+// #define ROLL    4
+// #define VRA     5
+// #define VRB     6
+// #define SWA     7
+// #define SWB     8
+// #define SWC     9
+// #define SWD     10
+
 
 class FlySkyReceiver : public IReceiver
 {
  public:
+
     FlySkyReceiver(const std::vector<uint8_t> &pins);
 
     ~FlySkyReceiver();
@@ -35,9 +48,11 @@ class FlySkyReceiver : public IReceiver
 
 
 private:
+
     bool IsReadyToCalibrate();
 
  private:
+     
     const uint8_t channel_count_;
 
     PWMPinListener** pwm_pin_listeners_;

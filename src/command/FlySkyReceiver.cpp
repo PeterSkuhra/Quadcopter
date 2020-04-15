@@ -1,9 +1,7 @@
 #include "FlySkyReceiver.hpp"
 
-using namespace command;
 
-
-FlySkyReceiver::FlySkyReceiver(const std::vector<uint8_t> &pins) :
+command::FlySkyReceiver::FlySkyReceiver(const std::vector<uint8_t> &pins) :
     channel_count_(pins.size()),
     is_calibrated_(false)
 {
@@ -19,9 +17,9 @@ FlySkyReceiver::FlySkyReceiver(const std::vector<uint8_t> &pins) :
     }
 }
 
-FlySkyReceiver::~FlySkyReceiver()
+command::FlySkyReceiver::~FlySkyReceiver()
 {
-    for (int i = 0; i < channel_count_; ++i) {
+    for (uint8_t i = 0; i < channel_count_; ++i) {
         delete [] pwm_pin_listeners_[i];
     }
     delete [] pwm_pin_listeners_;
@@ -29,7 +27,7 @@ FlySkyReceiver::~FlySkyReceiver()
     delete [] channels_offsets_;
 }
 
-uint16_t FlySkyReceiver::ReadChannel(uint8_t channel_number) const
+uint16_t command::FlySkyReceiver::ReadChannel(uint8_t channel_number) const
 {
     if ((channel_number <= channel_count_) && !(channel_number <= 0)) {
         uint16_t channel_value =
@@ -40,9 +38,11 @@ uint16_t FlySkyReceiver::ReadChannel(uint8_t channel_number) const
 
         return channel_value;
     }
+
+    return 0;
 }
 
-bool FlySkyReceiver::Calibrate()
+bool command::FlySkyReceiver::Calibrate()
 {
     delay(1000);
     if (!IsReadyToCalibrate()) {
@@ -50,7 +50,7 @@ bool FlySkyReceiver::Calibrate()
     }
     delay(1000);
 
-    const uint16_t kSamples = 4000;
+    const uint16_t kSamples = 2000;
 
     for (uint8_t i = 0; i < CALIBRATABLE_CHANNEL_COUNT; ++i) {
         int32_t sum = 0;
@@ -58,10 +58,10 @@ bool FlySkyReceiver::Calibrate()
         for (uint16_t j = 0; j < kSamples; ++j) {
             sum += pwm_pin_listeners_[i]->ReadChannel();
         }
-        if (i == 0) {
+        if (i == 0) {   // Thrust
             channels_offsets_[i] = MIN_VALUE - (sum / kSamples);
         }
-        else if ((i >= 1) && (i <= 3)) {
+        else if ((i >= 1) && (i <= 3)) {    // Yaw, Pitch, Roll
             channels_offsets_[i] = MIDDLE_VALUE - (sum / kSamples);
         }
     }
@@ -70,15 +70,15 @@ bool FlySkyReceiver::Calibrate()
     return true;
 }
 
-bool FlySkyReceiver::IsCalibrated() const
+bool command::FlySkyReceiver::IsCalibrated() const
 {
     return is_calibrated_;
 }
 
-bool FlySkyReceiver::IsReadyToCalibrate()
+bool command::FlySkyReceiver::IsReadyToCalibrate()
 {
-    const uint8_t kTolerance = 25;
-    const uint16_t max_time = 10000;
+    const uint8_t kTolerance = 35;
+    const uint16_t kMaxTime = 10000;
 
     uint8_t all_done = 0b0000;
 
@@ -106,7 +106,7 @@ bool FlySkyReceiver::IsReadyToCalibrate()
         }
 
         elapsed_time = millis() - start_time;
-        if (elapsed_time >= max_time) {
+        if (elapsed_time >= kMaxTime) {
             return false;
         }
     }

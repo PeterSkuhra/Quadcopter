@@ -1,7 +1,10 @@
 #ifndef IRECEIVER_HPP
 #define IRECEIVER_HPP
 
+#include <Arduino.h>
+
 #include "ICalibratable.hpp"
+
 
 namespace command
 {

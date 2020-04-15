@@ -16,16 +16,12 @@ public:
 
     uint16_t ReadChannel() const;
 
-    void HandleInterrupt();
+    inline void HandleInterrupt(uint16_t current_time);
 
 
 private:
 
-    inline void ProcessPWM();
-
-private:
-
-    uint8_t pin_;
+    const uint8_t pin_;
 
     uint16_t value_;
 

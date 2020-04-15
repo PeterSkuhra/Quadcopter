@@ -9,6 +9,8 @@ class IController
 public:
     virtual ~IController() = default;
 
+    virtual void Init() = 0;
+
     virtual void Control() = 0;
 };
 

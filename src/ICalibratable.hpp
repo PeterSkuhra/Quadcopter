@@ -1,7 +1,6 @@
 #ifndef ICALIBRATABLE_HPP
 #define ICALIBRATABLE_HPP
 
-#include <Arduino.h>
 
 class ICalibratable
 {
