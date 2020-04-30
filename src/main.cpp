@@ -95,7 +95,11 @@ void setup()
 
     debug_setup();
 
+<<<<<<< HEAD
     // wdt_enable(WDTO_60MS);
+=======
+    // wdt_enable(WDTO_30MS);
+>>>>>>> 49fdd4ec3744fc6ca165ee47661ef0f00ea443ff
     // enableWatchdog();
     wdt_reset();
 }
