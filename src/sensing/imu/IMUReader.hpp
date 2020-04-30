@@ -6,10 +6,11 @@
 //  https://github.com/ElectronicCats/mpu6050
 //  Example: MPU6050_DMP6.ino
 #include <I2Cdev.h>
-#include <MPU6050_6Axis_MotionApps20.h>
+// #include <MPU6050_6Axis_MotionApps20.h>
+#include <MPU6050_6Axis_MotionApps_V6_12.h>
 
 // #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include <SBWire.h>
+    #include "../../../lib/SBWire/src/SBWire.h"
 // #endif
 
 #include "IIMU.hpp"
