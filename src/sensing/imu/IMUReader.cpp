@@ -7,12 +7,28 @@
 /**
  *  Interrupt routine.
  */
-static volatile bool dmp_data_ready = false;
-static void SetDMPDataReady()
+volatile bool dmp_data_ready = false;
+void SetDMPDataReady()
 {
     dmp_data_ready = true;
 }
 
+static uint8_t teapotPacket[14] = {
+    '$',
+    0x02,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0x00,
+    0x00,
+    '\r',
+    '\n'
+};
 
 namespace imu
 {
@@ -30,7 +46,7 @@ sensing::imu::IMUReader::IMUReader(const uint8_t interrupt_pin) :
     kInterruptPin_(interrupt_pin),
     dmp_ready_(false),
     is_calibrated_(false),
-    // packet_size_(0),
+    packet_size_(0),
     fifo_count_(0)
 {
     for (uint8_t i = 0; i < 3; ++i) {
@@ -46,7 +62,7 @@ sensing::imu::IMUReader::IMUReader(const uint8_t interrupt_pin,
     kInterruptPin_(interrupt_pin),
     dmp_ready_(false),
     is_calibrated_(false),
-    // packet_size_(0),
+    packet_size_(0),
     fifo_count_(0)
 {
     axes_invert_[0] = x_invert;
@@ -67,21 +83,30 @@ void sensing::imu::IMUReader::Begin()
     Wire.setClock(COMMUNICATION_FREQUENCY);
 
     mpu_->initialize();
+
+    if (!mpu_->testConnection()) {
+        Serial.println(F("MPU6050 connection failed!"));
+    }
+    delay(500);
+
     device_status_ = mpu_->dmpInitialize();
     if (device_status_ == 0) {
-        dmp_ready_ = true;
-
-        mpu_->CalibrateAccel();     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        mpu_->CalibrateGyro();
+        mpu_->CalibrateAccel(6);     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        mpu_->CalibrateGyro(6);
 
         mpu_->setDMPEnabled(true);
 
         pinMode(kInterruptPin_, INPUT);
         enableInterrupt(kInterruptPin_, SetDMPDataReady, RISING);
+        mpu_interrupt_status_ = mpu_->getIntStatus();
 
-        // packet_size_ = mpu_->dmpGetFIFOPacketSize();
+        packet_size_ = mpu_->dmpGetFIFOPacketSize();
+
+        dmp_ready_ = true;
     }
     else {
+        dmp_ready_ = false;
+
         Serial.print(F("DMP Initialization failed (code "));
         Serial.print(device_status_);
         Serial.println(F(")"));
@@ -108,30 +133,99 @@ void sensing::imu::IMUReader::Update()
         return;
     }
 
-    if (mpu_->dmpGetCurrentFIFOPacket(fifo_buffer_)) {
-        mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
-        mpu_->dmpGetGravity(&gravity_, &quaternion_);
-        mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
-    }
+    // OTESTOVANE==============================================================
+
+    //
+    // while (!dmp_data_ready);
+
+    // if (dmp_data_ready) {
+    //
+    //     while (fifo_count_ < packet_size_) {
+    //         fifo_count_ = mpu_->getFIFOCount();
+    //     }
+    //
+    //     mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
+    //
+    //     fifo_count_ -= packet_size_;
+    //
+    //     mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
+    //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
+    //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
+    //
+    //     dmp_data_ready = false;
+    //     // digitalWrite(TEST_PIN, LOW);
+    // }
+    // OTESTOVANE==============================================================
+
+// OK - ale bez prerusenia (cyklus az 20ms) = NESTABILNE pri USB===============
+    // mpu_->resetFIFO();
+    //
+    // // get current FIFO count
+    // fifo_count_ = mpu_->getFIFOCount();
+    //
+    // // wait for correct available data length, should be a VERY short wait
+    // while (fifo_count_ < packet_size_) fifo_count_ = mpu_->getFIFOCount();
+    //
+    // // read a packet from FIFO
+    // mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
+    //
+    //
+    // // if (mpu_->dmpGetCurrentFIFOPacket(fifo_buffer_)) {
+    //     mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
+    //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
+    //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
+    // // }
+// OK - ale bez prerusenia (cyklus az 20ms)============================
 
 
-    // ========================================================================
+    // // ========================================================================
     // while (!dmp_data_ready && fifo_count_ < packet_size_) {
     //     if (dmp_data_ready && fifo_count_ < packet_size_) {
     //         fifo_count_ = mpu_->getFIFOCount();
     //     }
     // }
+
+    dmp_data_ready = false;
+    mpu_interrupt_status_ = mpu_->getIntStatus();
+
+    fifo_count_ = mpu_->getFIFOCount();
+    // //======================================================================
+    if (fifo_count_ == 0) {
+        return;
+    }
+    // --------
+    // if (fifo_count_ % packet_size_) {
+    //     uint8_t fifo_trash[packet_size_];
+    //     mpu_->getFIFOBytes(fifo_trash, (fifo_count_ % packet_size_) + packet_size_);
+    //     fifo_count_ -= ((fifo_count_ % packet_size_) + packet_size_);
     //
-    // dmp_data_ready = false;
-    // mpu_interrupt_status_ = mpu_->getIntStatus();
-    //
-    // fifo_count_ = mpu_->getFIFOCount();
+    //     fifo_count_ = mpu_->getFIFOCount();
+    //     if ((fifo_count_ % packet_size_) == 0) {
+    //         Serial.println("Success! :)");
+    //     }
+    //     if (fifo_count_ % packet_size_) {
+    //         Serial.print("Failure, we ar still of by: ");
+    //         Serial.println(fifo_count_ % packet_size_);
+    //         mpu_->resetFIFO();
+    //         return;
+    //     }
+    // }
+    //======================================================================
+
     // if (fifo_count_ < packet_size_) {
     //
     // }
     // else if ((mpu_interrupt_status_ & _BV(MPU6050_INTERRUPT_FIFO_OFLOW_BIT))
     //     || fifo_count_ >= 1024) {
     //         mpu_->resetFIFO();
+    // }
+    // else
+
+    // /**************************************************************************
+    // if ((fifo_count_ < packet_size_) || (fifo_count_ % packet_size_)) {
+    //     mpu_->resetFIFO();
+    //     Serial.println("FIFO Overflow!!!");
+    //     return;
     // }
     // else if (mpu_interrupt_status_ & _BV(MPU6050_INTERRUPT_DMP_INT_BIT)) {
     //     while (fifo_count_ >= packet_size_) {
@@ -143,6 +237,8 @@ void sensing::imu::IMUReader::Update()
     //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
     //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
     // }
+    // */
+
     // ========================================================================
 }
 

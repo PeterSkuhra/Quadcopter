@@ -88,6 +88,7 @@ control::IController* flight_controller;
 void setup()
 {
     Serial.begin(115200);
+    // Serial.begin(57600);
 
     flight_controller = new control::FlightController();
     flight_controller->Init();
@@ -95,7 +96,7 @@ void setup()
     debug_setup();
 
     // wdt_enable(WDTO_60MS);
-    enableWatchdog();
+    // enableWatchdog();
     wdt_reset();
 }
 
@@ -104,5 +105,5 @@ void loop()
     flight_controller->Control();
 
     debug_loop();
-    wdt_reset();
+    // wdt_reset();
 }

@@ -3,9 +3,10 @@
 
 #include <Arduino.h>
 
+//  https://github.com/ElectronicCats/mpu6050
+//  Example: MPU6050_DMP6.ino
 #include <I2Cdev.h>
-//#include <MPU6050_6Axis_MotionApps20.h>       // stare_mpu
-#include <MPU6050_6Axis_MotionApps_V6_12.h>
+#include <MPU6050_6Axis_MotionApps20.h>
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
     #include <Wire.h>
@@ -74,7 +75,7 @@ private:
 
     uint8_t device_status_;
 
-    // uint16_t packet_size_;
+    uint16_t packet_size_;
 
     uint16_t fifo_count_;
 

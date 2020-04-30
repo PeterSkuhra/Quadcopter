@@ -250,6 +250,11 @@ void control::FlightController::ReadIMUData()
     // Serial.print("YAW: "); Serial.print(imu_data_.yaw);
     // Serial.print("   PITCH: "); Serial.print(imu_data_.pitch);
     // Serial.print("   ROLL: "); Serial.println(imu_data_.roll);
+
+    Serial.println("YPR: " +
+        String(imu_data_.yaw) + ",   " +
+        String(imu_data_.pitch) + ",   " +
+        String(imu_data_.roll));
 }
 
 void control::FlightController::PIDCalculation()
