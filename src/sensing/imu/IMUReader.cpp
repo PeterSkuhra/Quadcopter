@@ -164,10 +164,6 @@ void sensing::imu::IMUReader::Update()
     //
     //     dmp_data_ready = false;
     // }
-<<<<<<< HEAD
-    // */
-
-=======
     // moj pokus - neuspesne=============
 
 // ========================================================================
@@ -205,7 +201,6 @@ void sensing::imu::IMUReader::Update()
     }
     // stabilne, FIFO sa neprejavilo
     // netriafa FIFO, ale drzalo stabilitu
->>>>>>> 49fdd4ec3744fc6ca165ee47661ef0f00ea443ff
     // ========================================================================
 }
 

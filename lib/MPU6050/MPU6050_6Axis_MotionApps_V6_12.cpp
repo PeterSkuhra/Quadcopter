@@ -1,6 +1,7 @@
 #include "MPU6050_6Axis_MotionApps_V6_12.h"
 
-
+// this is the most basic initialization I can create. with the intent that we access the register bytes as few times as needed to get the job done.
+// for detailed descriptins of all registers and there purpose google "MPU-6000/MPU-6050 Register Map and Descriptions"
 uint8_t MPU6050::dmpInitialize() { // Lets get it over with fast Write everything once and set it up necely
 	uint8_t val;
 	uint16_t ival;
@@ -266,5 +267,7 @@ uint16_t MPU6050::dmpGetFIFOPacketSize() {
 
 
 
-
+uint8_t MPU6050::dmpGetCurrentFIFOPacket(uint8_t *data) { // overflow proof
+    return(GetCurrentFIFOPacket(data, dmpPacketSize));
+}
 

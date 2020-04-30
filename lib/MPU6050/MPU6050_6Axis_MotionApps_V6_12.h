@@ -70,16 +70,16 @@ THE SOFTWARE.
         typedef uint16_t prog_uint16_t;
         typedef int32_t prog_int32_t;
         typedef uint32_t prog_uint32_t;
-        
+
         #define strcpy_P(dest, src) strcpy((dest), (src))
         #define strcat_P(dest, src) strcat((dest), (src))
         #define strcmp_P(a, b) strcmp((a), (b))
-        
+
         #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
         #define pgm_read_word(addr) (*(const unsigned short *)(addr))
         #define pgm_read_dword(addr) (*(const unsigned long *)(addr))
         #define pgm_read_float(addr) (*(const float *)(addr))
-        
+
         #define pgm_read_byte_near(addr) pgm_read_byte(addr)
         #define pgm_read_word_near(addr) pgm_read_word(addr)
         #define pgm_read_dword_near(addr) pgm_read_dword(addr)
@@ -343,8 +343,9 @@ const unsigned char dmpMemory[MPU6050_DMP_CODE_SIZE] PROGMEM = {
 };
 
 // this divisor is pre configured into the above image and can't be modified at this time.
-#ifndef MPU6050_DMP_FIFO_RATE_DIVISOR 
-#define MPU6050_DMP_FIFO_RATE_DIVISOR 0x01 // The New instance of the Firmware has this as the default 
+#ifndef MPU6050_DMP_FIFO_RATE_DIVISOR
+// #define MPU6050_DMP_FIFO_RATE_DIVISOR 0x01 // The New instance of the Firmware has this as the default
+#define MPU6050_DMP_FIFO_RATE_DIVISOR 0x03  //  200 Hz / (1 + 3) = 50 Hz
 #endif
 
 // this is the most basic initialization I can create. with the intent that we access the register bytes as few times as needed to get the job done.
@@ -409,7 +410,7 @@ uint8_t MPU6050::dmpGetEuler(float *data, Quaternion *q);
 
 #ifdef USE_OLD_DMPGETYAWPITCHROLL
 uint8_t MPU6050::dmpGetYawPitchRoll(float *data, Quaternion *q, VectorFloat *gravity);
-#else 
+#else
 uint8_t MPU6050::dmpGetYawPitchRoll(float *data, Quaternion *q, VectorFloat *gravity);
 #endif
 
@@ -429,5 +430,9 @@ uint8_t MPU6050::dmpReadAndProcessFIFOPacket(uint8_t numPackets, uint8_t *proces
 // uint32_t MPU6050::dmpGetAccelSumOfSquare();
 // void MPU6050::dmpOverrideQuaternion(long *q);
 uint16_t MPU6050::dmpGetFIFOPacketSize();
+
+
+
+uint8_t MPU6050::dmpGetCurrentFIFOPacket(uint8_t *data); // overflow proof
 
 #endif /* _MPU6050_6AXIS_MOTIONAPPS20_H_ */
