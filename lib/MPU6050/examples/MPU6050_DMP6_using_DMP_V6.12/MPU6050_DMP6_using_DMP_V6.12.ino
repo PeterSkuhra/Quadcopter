@@ -47,16 +47,16 @@
 
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
-#include "I2Cdev.h"
+#include <I2Cdev.h>
 
 #include "MPU6050_6Axis_MotionApps_V6_12.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-#include "Wire.h"
-#endif
+// #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+// #include <SBWire.h>
+// #endif
 
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -259,7 +259,7 @@ void loop() {
   // if programming failed, don't try to do anything
   if (!dmpReady) return;
   // read a packet from FIFO
-  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
+  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet
 
 #ifdef OUTPUT_READABLE_QUATERNION
     // display quaternion values in easy matrix form: w x y z

@@ -64,21 +64,21 @@ void control::FlightController::Init()
         digitalWrite(LED_ORANGE_PIN, HIGH);
 
         // ESC's
-        delay(500);
-        if (receiver_->ReadChannel(10) < 1200 && receiver_->ReadChannel(10) > 900) {
-            Serial.println(F("\nCalibrating all ESC..."));
+        // delay(500);
+        // if (receiver_->ReadChannel(10) < 1200 && receiver_->ReadChannel(10) > 900) {
+        //     Serial.println(F("\nCalibrating all ESC..."));
+        //
+        //     if (esc_manager_->Calibrate()) {
+        //         Serial.println(F("\nCalibration all ESC OK :)"));
+        //     }
+        //     else {
+        //         Serial.println(F("\nCalibration ESC NOK :("));
+        //     }
+        // }
 
-            if (esc_manager_->Calibrate()) {
-                Serial.println(F("\nCalibration all ESC OK :)"));
-            }
-            else {
-                Serial.println(F("\nCalibration ESC NOK :("));
-            }
-        }
-
-        while (receiver_->ReadChannel(10) < 1200) {
-            delay(10);
-        }
+        // while (receiver_->ReadChannel(10) < 1200) {
+        //     delay(10);
+        // }
 
         // IMU
         imu_->Begin();
@@ -90,19 +90,18 @@ void control::FlightController::Init()
         else {
             Serial.println(F("\nCalibration imu NOK :("));
             //while(true);
-
         }
         delay(100);
 
         // Receiver
-        Serial.println(F("\nCalibrating receiver..."));
-        if (receiver_->Calibrate()) {
-            Serial.println(F("\nCalibration rec OK :)"));
-        }
-        else {
-            Serial.println(F("\nCalibration rec NOK :("));
-            while(true);
-        }
+        // Serial.println(F("\nCalibrating receiver..."));
+        // if (receiver_->Calibrate()) {
+        //     Serial.println(F("\nCalibration rec OK :)"));
+        // }
+        // else {
+        //     Serial.println(F("\nCalibration rec NOK :("));
+        //     while(true);
+        // }
 
 
         this->InitFilter();
@@ -250,6 +249,11 @@ void control::FlightController::ReadIMUData()
     // Serial.print("YAW: "); Serial.print(imu_data_.yaw);
     // Serial.print("   PITCH: "); Serial.print(imu_data_.pitch);
     // Serial.print("   ROLL: "); Serial.println(imu_data_.roll);
+
+    Serial.println("YPR: " +
+        String(imu_data_.yaw) + ",    " +
+        String(imu_data_.pitch) + ",   " +
+        String(imu_data_.roll));
 }
 
 void control::FlightController::PIDCalculation()

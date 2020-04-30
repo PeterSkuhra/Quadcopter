@@ -7,9 +7,9 @@
 //#include <MPU6050_6Axis_MotionApps20.h>       // stare_mpu
 #include <MPU6050_6Axis_MotionApps_V6_12.h>
 
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include <Wire.h>
-#endif
+// #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    #include <SBWire.h>
+// #endif
 
 #include "IIMU.hpp"
 #include "../temperature/IThermometer.hpp"
@@ -74,7 +74,7 @@ private:
 
     uint8_t device_status_;
 
-    // uint16_t packet_size_;
+    uint16_t packet_size_;
 
     uint16_t fifo_count_;
 
