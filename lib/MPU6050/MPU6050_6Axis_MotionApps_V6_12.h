@@ -344,8 +344,8 @@ const unsigned char dmpMemory[MPU6050_DMP_CODE_SIZE] PROGMEM = {
 
 // this divisor is pre configured into the above image and can't be modified at this time.
 #ifndef MPU6050_DMP_FIFO_RATE_DIVISOR
-// #define MPU6050_DMP_FIFO_RATE_DIVISOR 0x01 // The New instance of the Firmware has this as the default
-#define MPU6050_DMP_FIFO_RATE_DIVISOR 0x03  //  200 Hz / (1 + 3) = 50 Hz
+#define MPU6050_DMP_FIFO_RATE_DIVISOR 0x01 // The New instance of the Firmware has this as the default
+// #define MPU6050_DMP_FIFO_RATE_DIVISOR 0x03  //  200 Hz / (1 + 3) = 50 Hz
 #endif
 
 // this is the most basic initialization I can create. with the intent that we access the register bytes as few times as needed to get the job done.

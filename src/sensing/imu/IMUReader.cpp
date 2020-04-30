@@ -142,13 +142,19 @@ void sensing::imu::IMUReader::Update()
     // }
     // nove, ale cele zle
 
-    // moj pokus - neuspesne=============
+    // moj pokus - neuspesne zatial=============
     // if (dmp_data_ready) {
+    //     dmp_data_ready = false;
     //
     //     fifo_count_ = mpu_->getFIFOCount();
     //
+    //
     //     // wait for correct available data length, should be a VERY short wait
-    //     while (fifo_count_ < packet_size_) fifo_count_ = mpu_->getFIFOCount();
+    //     while (fifo_count_ < packet_size_) {
+    //         fifo_count_ = mpu_->getFIFOCount();
+    //         // Serial.println("f_cnt: " + String(fifo_count_));
+    //         // Serial.println("pckt_sz: " + String(packet_size_));
+    //     }
     //
     //     // read a packet from FIFO
     //     mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
@@ -162,44 +168,79 @@ void sensing::imu::IMUReader::Update()
     //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
     //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
     //
-    //     dmp_data_ready = false;
+    //
     // }
+    
+    if (dmp_data_ready) {
+        dmp_data_ready = false;
+
+        fifo_count_ = mpu_->getFIFOCount();
+
+        if (fifo_count_ == 0) {
+            return;     // no data
+        }
+
+        while ((fifo_count_ % packet_size_) != 0) {
+            mpu_->resetFIFO();
+            fifo_count_ = 0;
+            Serial.println("rst_fifo");
+        }
+
+        // wait for correct available data length, should be a VERY short wait
+        while (fifo_count_ < packet_size_) {
+            fifo_count_ = mpu_->getFIFOCount();
+            // Serial.println("f_cnt: " + String(fifo_count_));
+            // Serial.println("pckt_sz: " + String(packet_size_));
+        }
+
+        // read a packet from FIFO
+        mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
+
+        // track FIFO count here in case there is > 1 packet available
+        // (this lets us immediately read more without waiting for an interrupt)
+        fifo_count_ -= packet_size_;
+
+
+        mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
+        mpu_->dmpGetGravity(&gravity_, &quaternion_);
+        mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
+
+
+    }
     // moj pokus - neuspesne=============
 
 // ========================================================================
 // netriafa FIFO, ale drzalo stabilitu
     // if (!dmp_data_ready)
     //     return;
-
-// stabilne, FIFO sa neprejavilo
-    while (!dmp_data_ready && fifo_count_ < packet_size_) {
-        if (dmp_data_ready && fifo_count_ < packet_size_) {
-            fifo_count_ = mpu_->getFIFOCount();
-        }
-    }
-
-    dmp_data_ready = false;
-    mpu_interrupt_status_ = mpu_->getIntStatus();
-
-    fifo_count_ = mpu_->getFIFOCount();
-    if (fifo_count_ < packet_size_) {
-
-    }
-    else if ((mpu_interrupt_status_ & _BV(MPU6050_INTERRUPT_FIFO_OFLOW_BIT))
-        || fifo_count_ >= 1024) {
-            mpu_->resetFIFO();
-    }
-    else if (mpu_interrupt_status_ & _BV(MPU6050_INTERRUPT_DMP_INT_BIT)) {
-        while (fifo_count_ >= packet_size_) {
-            mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
-            fifo_count_ -= packet_size_;
-        }
-
-        mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
-        mpu_->dmpGetGravity(&gravity_, &quaternion_);
-        mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
-    }
-    // stabilne, FIFO sa neprejavilo
+    //
+    // while (!dmp_data_ready && fifo_count_ < packet_size_) {
+    //     if (dmp_data_ready && fifo_count_ < packet_size_) {
+    //         fifo_count_ = mpu_->getFIFOCount();
+    //     }
+    // }
+    //
+    // dmp_data_ready = false;
+    // mpu_interrupt_status_ = mpu_->getIntStatus();
+    //
+    // fifo_count_ = mpu_->getFIFOCount();
+    // if (fifo_count_ < packet_size_) {
+    //
+    // }
+    // else if ((mpu_interrupt_status_ & _BV(MPU6050_INTERRUPT_FIFO_OFLOW_BIT))
+    //     || fifo_count_ >= 1024) {
+    //         mpu_->resetFIFO();
+    // }
+    // else if (mpu_interrupt_status_ & _BV(MPU6050_INTERRUPT_DMP_INT_BIT)) {
+    //     while (fifo_count_ >= packet_size_) {
+    //         mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
+    //         fifo_count_ -= packet_size_;
+    //     }
+    //
+    //     mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
+    //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
+    //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
+    // }
     // netriafa FIFO, ale drzalo stabilitu
     // ========================================================================
 }
