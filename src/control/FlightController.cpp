@@ -76,9 +76,10 @@ void control::FlightController::Init()
         //     }
         // }
 
-        // while (receiver_->ReadChannel(10) < 1200) {
-        //     delay(10);
-        // }
+        while (receiver_->ReadChannel(5) < 1200) {
+            delay(10);
+            Serial.println("CH10: " + String(receiver_->ReadChannel(5)));
+        }
 
         // IMU
         imu_->Begin();
@@ -94,14 +95,14 @@ void control::FlightController::Init()
         delay(100);
 
         // Receiver
-        // Serial.println(F("\nCalibrating receiver..."));
-        // if (receiver_->Calibrate()) {
-        //     Serial.println(F("\nCalibration rec OK :)"));
-        // }
-        // else {
-        //     Serial.println(F("\nCalibration rec NOK :("));
-        //     while(true);
-        // }
+        Serial.println(F("\nCalibrating receiver..."));
+        if (receiver_->Calibrate()) {
+            Serial.println(F("\nCalibration rec OK :)"));
+        }
+        else {
+            Serial.println(F("\nCalibration rec NOK :("));
+            while(true);
+        }
 
 
         this->InitFilter();
@@ -246,10 +247,6 @@ void control::FlightController::ReadIMUData()
     // imu_data_.pitch = 0;
     // imu_data_.roll = 0;
 
-    // Serial.print("YAW: "); Serial.print(imu_data_.yaw);
-    // Serial.print("   PITCH: "); Serial.print(imu_data_.pitch);
-    // Serial.print("   ROLL: "); Serial.println(imu_data_.roll);
-
     Serial.println("YPR: " +
         String(imu_data_.yaw) + ",    " +
         String(imu_data_.pitch) + ",   " +
@@ -272,6 +269,11 @@ void control::FlightController::PIDCalculation()
     // Serial.print(pid_data_.yaw); Serial.print(" ");
     // Serial.print(pid_data_.pitch); Serial.print(" ");
     // Serial.print(pid_data_.roll); Serial.println(" ");
+
+    // Serial.println("TYPR: " + String(receiver_data_.thrust) + " " +
+    //                           String(pid_data_.yaw) + " " +
+    //                           String(pid_data_.pitch) + " " +
+    //                           String(pid_data_.roll));
 }
 
 void control::FlightController::CalculateMotorsSpeeds()

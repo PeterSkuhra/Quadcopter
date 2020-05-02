@@ -10,9 +10,9 @@ static std::vector<command::PWMPinListener*> pwm_listener_instances;
 
 static void InterruptHandler(void)
 {
-    uint16_t current_time = micros();
+    register uint16_t current_time = micros();
 
-    for (uint8_t i = 0; i < pwm_listener_instances.size(); ++i) {
+    for (register uint8_t i = 0; i < pwm_listener_instances.size(); ++i) {
         pwm_listener_instances.at(i)->HandleInterrupt(current_time);
     }
 }
@@ -48,7 +48,7 @@ uint16_t command::PWMPinListener::ReadChannel() const
     return value_;
 }
 
-void command::PWMPinListener::HandleInterrupt(uint16_t current_time)
+void command::PWMPinListener::HandleInterrupt(register uint16_t current_time)
 {
     if (digitalRead(pin_)) {
         if (!update_started_) {

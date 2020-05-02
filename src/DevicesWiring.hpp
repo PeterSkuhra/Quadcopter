@@ -28,12 +28,12 @@ static const std::vector<uint8_t> kReceiverPins {
     CHANNEL2_PIN,
     CHANNEL3_PIN,
     CHANNEL4_PIN,
-    CHANNEL5_PIN,
-    CHANNEL6_PIN,
-    CHANNEL7_PIN,
-    CHANNEL8_PIN,
-    CHANNEL9_PIN,
-    CHANNEL10_PIN
+    CHANNEL5_PIN,       // Kratsi cyklus
+    // CHANNEL6_PIN,
+    // CHANNEL7_PIN,
+    // CHANNEL8_PIN,
+    // CHANNEL9_PIN,
+    // CHANNEL10_PIN
 };
 
 
