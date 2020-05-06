@@ -39,6 +39,13 @@ private:
         T roll;
     };
 
+    template <typename T>
+    struct Axes {
+        T x;
+        T y;
+        T z;
+    };
+
     void InitFilter();
     void InitPID();
     void ReadReceiverData();
@@ -55,6 +62,8 @@ private:
     command::IReceiver* receiver_;
 
     MotionData<ExponentialFilter<float>* > filter_;
+
+    ExponentialFilter<float>* yaw_filter_;
 
     MotionData<int16_t> receiver_data_;
     MotionData<float> imu_data_;
