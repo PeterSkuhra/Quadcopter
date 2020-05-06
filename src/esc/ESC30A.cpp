@@ -20,6 +20,7 @@ esc::ESC30A::ESC30A(uint8_t pin) :
 {
     InitRegisters(GetTimer(pin_));
     pinMode(pin_, OUTPUT);
+    SetSpeed(MIN_PULSE);
 }
 
 esc::ESC30A::~ESC30A()
@@ -29,6 +30,11 @@ esc::ESC30A::~ESC30A()
 
 void esc::ESC30A::SetSpeed(uint16_t speed)
 {
+    if (speed == 0) {
+        WritePWM12bit(pin_, 0);
+        return;
+    }
+
     speed_ = constrain(speed, MIN_PULSE, MAX_PULSE);
 
     WritePWM12bit(pin_, speed_ * 2);

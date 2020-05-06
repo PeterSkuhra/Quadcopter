@@ -87,8 +87,7 @@ control::IController* flight_controller;
 
 void setup()
 {
-    // Serial.begin(115200);
-    // Serial.begin(57600);
+    Serial.begin(115200);
 
     flight_controller = new control::FlightController();
     flight_controller->Init();

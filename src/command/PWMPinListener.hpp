@@ -31,7 +31,7 @@ private:
         uint16_t start;
         uint16_t current;
     } time_;
-
+    
 };
 
 }

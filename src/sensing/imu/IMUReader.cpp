@@ -80,8 +80,8 @@ void sensing::imu::IMUReader::Begin()
     if (device_status_ == 0) {
         dmp_ready_ = true;
 
-        mpu_->CalibrateAccel(6);     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        mpu_->CalibrateGyro(6);
+        // mpu_->CalibrateAccel(6);
+        // mpu_->CalibrateGyro(6);
 
         mpu_->setDMPEnabled(true);
 
@@ -106,8 +106,8 @@ bool sensing::imu::IMUReader::Calibrate()
     if (!dmp_ready_) {
         return false;
     }
-    // mpu_->CalibrateAccel(6);
-    // mpu_->CalibrateGyro(6);
+    mpu_->CalibrateAccel(6);
+    mpu_->CalibrateGyro(6);
     is_calibrated_ = true;
 
     return is_calibrated_;
@@ -124,43 +124,22 @@ void sensing::imu::IMUReader::Update()
         return;
     }
 
-    // nove, ale cele zle
-    // if (mpu_->dmpGetCurrentFIFOPacket(fifo_buffer_)) {
-    //     mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
-    //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
-    //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
-    // }
-    // nove, ale cele zle
+    if (!dmp_data_ready) {
+        return;
+    }
 
-    // moj pokus - neuspesne zatial=============
-    // if (dmp_data_ready) {
-    //     dmp_data_ready = false;
-    //
-    //     fifo_count_ = mpu_->getFIFOCount();
-    //
-    //
-    //     // wait for correct available data length, should be a VERY short wait
-    //     while (fifo_count_ < packet_size_) {
-    //         fifo_count_ = mpu_->getFIFOCount();
-    //         // Serial.println("f_cnt: " + String(fifo_count_));
-    //         // Serial.println("pckt_sz: " + String(packet_size_));
-    //     }
-    //
-    //     // read a packet from FIFO
-    //     mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
-    //
-    //     // track FIFO count here in case there is > 1 packet available
-    //     // (this lets us immediately read more without waiting for an interrupt)
-    //     fifo_count_ -= packet_size_;
-    //
-    //
-    //     mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
-    //     mpu_->dmpGetGravity(&gravity_, &quaternion_);
-    //     mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
-    //
-    //
-    // }
+    // nove...s SBWire zatial nepadol ani nepretiekol
+    if (mpu_->dmpGetCurrentFIFOPacket(fifo_buffer_)) {
+        mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
+        mpu_->dmpGetGravity(&gravity_, &quaternion_);
+        mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
 
+        dmp_data_ready = false;
+        digitalWrite(DEBUG_PIN, LOW);
+    }
+    // nove
+
+/*************************************
     // OK!
     if (dmp_data_ready) {
         dmp_data_ready = false;
@@ -197,10 +176,11 @@ void sensing::imu::IMUReader::Update()
         mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
         mpu_->dmpGetGravity(&gravity_, &quaternion_);
         mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
+        // mpu_->resetFIFO();   // vyskusat!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         digitalWrite(DEBUG_PIN, LOW);
     }
-    // moj pokus
+    ***********************/
 }
 
 float sensing::imu::IMUReader::GetXAcceleration() const
