@@ -16,7 +16,7 @@ public:
 
     uint16_t ReadChannel() const;
 
-    inline void HandleInterrupt(uint16_t current_time);
+    inline void HandleInterrupt(uint32_t current_time);
 
 
 private:
@@ -27,11 +27,16 @@ private:
 
     bool update_started_;
 
+    template <typename T>
     struct timer {
-        uint16_t start;
-        uint16_t current;
-    } time_;
-    
+        T start;
+        T current;
+        T previous;
+        T elapsed;
+    };
+
+    timer<uint32_t> time_;
+
 };
 
 }
