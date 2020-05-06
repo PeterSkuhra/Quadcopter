@@ -80,16 +80,12 @@ void sensing::imu::IMUReader::Begin()
     if (device_status_ == 0) {
         dmp_ready_ = true;
 
-        // mpu_->CalibrateAccel(6);
-        // mpu_->CalibrateGyro(6);
-
         mpu_->setDMPEnabled(true);
 
         pinMode(kInterruptPin_, INPUT);
         enableInterrupt(kInterruptPin_, SetDMPDataReady, RISING);
         mpu_interrupt_status_ = mpu_->getIntStatus();
         packet_size_ = mpu_->dmpGetFIFOPacketSize();
-        // mpu_->resetFIFO();
 
         pinMode(DEBUG_PIN, OUTPUT);
     }
@@ -128,7 +124,6 @@ void sensing::imu::IMUReader::Update()
         return;
     }
 
-    // nove...s SBWire zatial nepadol ani nepretiekol
     if (mpu_->dmpGetCurrentFIFOPacket(fifo_buffer_)) {
         mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
         mpu_->dmpGetGravity(&gravity_, &quaternion_);
@@ -137,50 +132,6 @@ void sensing::imu::IMUReader::Update()
         dmp_data_ready = false;
         digitalWrite(DEBUG_PIN, LOW);
     }
-    // nove
-
-/*************************************
-    // OK!
-    if (dmp_data_ready) {
-        dmp_data_ready = false;
-
-        fifo_count_ = mpu_->getFIFOCount();
-
-        if (fifo_count_ == 0) {
-            return;     // no data
-        }
-
-        while ((fifo_count_ % packet_size_) != 0) {
-            mpu_->resetFIFO();
-            // fifo_count_ = 0;
-            fifo_count_ = mpu_->getFIFOCount();
-            Serial.println("RESET - f_cnt: " + String(fifo_count_));
-        }
-
-        // wait for correct available data length, should be a VERY short wait
-        fifo_count_ = mpu_->getFIFOCount();
-        while (fifo_count_ < packet_size_) {
-            fifo_count_ = mpu_->getFIFOCount();
-            // Serial.println("f_cnt: " + String(fifo_count_));
-            // Serial.println("pckt_sz: " + String(packet_size_));
-        }
-
-        // read a packet from FIFO
-        mpu_->getFIFOBytes(fifo_buffer_, packet_size_);
-
-        // track FIFO count here in case there is > 1 packet available
-        // (this lets us immediately read more without waiting for an interrupt)
-        fifo_count_ -= packet_size_;
-
-
-        mpu_->dmpGetQuaternion(&quaternion_, fifo_buffer_);
-        mpu_->dmpGetGravity(&gravity_, &quaternion_);
-        mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
-        // mpu_->resetFIFO();   // vyskusat!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-        digitalWrite(DEBUG_PIN, LOW);
-    }
-    ***********************/
 }
 
 float sensing::imu::IMUReader::GetXAcceleration() const
