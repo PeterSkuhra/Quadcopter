@@ -7,6 +7,8 @@
 #include "sensing/voltage/VoltageSensor.hpp"
 #include "esc/ESC30A.hpp"
 
+#include "sensing/current/CurrentSensor.hpp"        /////////////////
+
 using namespace wiring;
 
 #define MIN_PULSE_US   1000
@@ -25,6 +27,8 @@ control::FlightController::FlightController() :
     voltage_sensor_ =
         new sensing::voltage::VoltageSensor(BATTERY_VOLTAGE_SENSOR_PIN,
                                             BATTERY_VOLTAGE_SENSOR_RESOLUTION);
+
+    current_sensor_ = new sensing::current::CurrentSensor(A15);      /////////////////
 
     imu_ = new sensing::imu::IMUReader(MPU6050_INT_PIN, false, true, true);
 
@@ -152,6 +156,10 @@ void control::FlightController::Init()
 
         init_ = true;
     }
+
+    Serial.println("Time[s], Voltage[V], Current[A]");      ///////////////////
+    prev_time = 0;                                          ///////////////////
+    while (!(receiver_->ReadChannel(1) > 1900));            ///////////////////!!!!!!!!!!!!!!!!!!!!!!
 }
 
 void control::FlightController::InitPID()
@@ -200,6 +208,17 @@ void control::FlightController::Control()
     this->CalculateMotorsSpeeds();
 
     this->WriteMotorsSpeeds();
+
+    uint32_t curr_time = millis();
+    float voltage = voltage_filter_->Filter(voltage_sensor_->GetAnalogValue());      // V
+    // float voltage = voltage_sensor_->GetAnalogValue();
+    float current = current_filter_->Filter(current_sensor_->GetAnalogValue()) / 1000;      // A
+
+    if ((curr_time - prev_time) >= 1000) {
+        prev_time = curr_time;
+        seconds_++;
+        Serial.println(String(seconds_) + ", " + String(voltage) + ", " + String(current));
+    }
 }
 
 void control::FlightController::InitFilter()
@@ -217,6 +236,8 @@ void control::FlightController::InitFilter()
     filter_.roll   = new ExponentialFilter<float>(kFilterWeight, receiver_data_.roll);
 
     yaw_filter_ = new ExponentialFilter<float>(5, 0);
+    current_filter_ = new ExponentialFilter<float>(20, current_sensor_->GetAnalogValue());       /////////////////
+    voltage_filter_ = new ExponentialFilter<float>(20, voltage_sensor_->GetAnalogValue());
 }
 
 void control::FlightController::ReadReceiverData()
@@ -289,6 +310,15 @@ void control::FlightController::ReadIMUData()
         imu_data_.roll = imu_->GetRollAngle();
 
         imu_data_.yaw = yaw_filter_->Filter(imu_data_.yaw);
+
+        //===============NEW - for cascade PID================================
+        // imu_data2_.angles.yaw = imu_->GetYawAngle();
+        // imu_data2_.angles.pitch = imu_->GetPitchAngle();
+        // imu_data2_.angles.roll = imu_->GetRollAngle();
+        //
+        // imu_data2_.angular_rate.x = imu_->GetXAngularRate();
+        // imu_data2_.angular_rate.y = imu_->GetYAngularRate();
+        // imu_data2_.angular_rate.z = imu_->GetZAngularRate();
     }
     else {
         delay(3);
@@ -297,13 +327,6 @@ void control::FlightController::ReadIMUData()
         imu_data_.pitch = 0;
         imu_data_.roll = 0;
     }
-
-
-    // // TEST without mpu update
-    // delay(12);
-    // imu_data_.yaw = 0;
-    // imu_data_.pitch = 0;
-    // imu_data_.roll = 0;
 
     // Serial.println("YPR: " +
     //     String(imu_data_.yaw) + ",    " +
