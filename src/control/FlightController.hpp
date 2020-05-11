@@ -72,17 +72,14 @@ private:
 private:
 
     sensing::voltage::ISensor* voltage_sensor_;
-    sensing::voltage::ISensor* current_sensor_;      /////////////////
+
     sensing::imu::IIMU* imu_;
     command::IReceiver* receiver_;
 
     MotionData<ExponentialFilter<float>* > filter_;
 
     ExponentialFilter<float>* yaw_filter_;
-    ExponentialFilter<float>* current_filter_;       /////////////////
-    ExponentialFilter<float>* voltage_filter_;       /////////////////
-    uint32_t prev_time;                              /////////////////
-    uint32_t seconds_ = 0;
+    ExponentialFilter<float>* voltage_filter_;
 
     MotionData<int16_t> receiver_data_;
     MotionData<float> imu_data_;
