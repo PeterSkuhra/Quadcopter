@@ -28,15 +28,7 @@ private:
 
     bool update_started_;
 
-    template <typename T>
-    struct timer {
-        T start;
-        T current;
-        T previous;
-        T elapsed;
-    };
-
-    timer<uint32_t> time_;
+    uint32_t time_start_;
 
 };
 

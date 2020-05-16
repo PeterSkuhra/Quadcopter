@@ -72,13 +72,13 @@ void command::PWMPinListener::HandleInterrupt()
     if (digitalRead(pin_)) {
         if (!update_started_) {
             update_started_ = true;
-            time_.start = micros();
+            time_start_ = micros();
         }
     }
     else {
         if (update_started_) {
             update_started_ = false;
-            value_ = micros() - time_.start;
+            value_ = micros() - time_start_;
         }
     }
 }
