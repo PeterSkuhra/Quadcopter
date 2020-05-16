@@ -6,17 +6,36 @@
 #include <EnableInterrupt.h>
 
 
-static std::vector<command::PWMPinListener*> pwm_listener_instances;
+//=============================================================================
 
-static void InterruptHandler(void)
-{
-    register uint32_t current_time = micros();
+static void HandleInterrupt1();
+static void HandleInterrupt2();
+static void HandleInterrupt3();
+static void HandleInterrupt4();
+static void HandleInterrupt5();
+static void HandleInterrupt6();
+static void HandleInterrupt7();
+static void HandleInterrupt8();
+static void HandleInterrupt9();
+static void HandleInterrupt10();
 
-    for (register uint8_t i = 0; i < pwm_listener_instances.size(); ++i) {
-        pwm_listener_instances.at(i)->HandleInterrupt(current_time);
-    }
-}
+typedef void (*isr_p)(void);
 
+static std::vector<isr_p> isr_functions{
+    &HandleInterrupt1,
+    &HandleInterrupt2,
+    &HandleInterrupt3,
+    &HandleInterrupt4,
+    &HandleInterrupt5,
+    &HandleInterrupt6,
+    &HandleInterrupt7,
+    &HandleInterrupt8,
+    &HandleInterrupt9,
+    &HandleInterrupt10
+};
+
+static std::vector<command::PWMPinListener*> instances;
+//=============================================================================
 
 command::PWMPinListener::PWMPinListener(uint8_t pin) :
     pin_(pin),
@@ -26,19 +45,19 @@ command::PWMPinListener::PWMPinListener(uint8_t pin) :
     pinMode(pin_, INPUT);
 
     noInterrupts();
-    enableInterrupt(pin_, InterruptHandler, CHANGE);
+    enableInterrupt(pin_, isr_functions[instances.size()], CHANGE);
     interrupts();
 
-    pwm_listener_instances.push_back(this);
+    instances.push_back(this);
 }
 
 command::PWMPinListener::~PWMPinListener()
 {
     disableInterrupt(pin_);
 
-    for (uint8_t i = 0; i < pwm_listener_instances.size(); ++i) {
-        if (pwm_listener_instances.at(i) == this) {
-            pwm_listener_instances.erase(pwm_listener_instances.begin() + i);
+    for (uint8_t i = 0; i < instances.size(); ++i) {
+        if (instances.at(i) == this) {
+            instances.erase(instances.begin() + i);
         }
     }
 }
@@ -48,7 +67,7 @@ uint16_t command::PWMPinListener::ReadChannel() const
     return value_;
 }
 
-void command::PWMPinListener::HandleInterrupt(register uint32_t current_time)
+void command::PWMPinListener::HandleInterrupt()
 {
     if (digitalRead(pin_)) {
         if (!update_started_) {
@@ -59,7 +78,80 @@ void command::PWMPinListener::HandleInterrupt(register uint32_t current_time)
     else {
         if (update_started_) {
             update_started_ = false;
-            value_ = current_time - time_.start;
+            value_ = micros() - time_.start;
         }
+    }
+}
+
+
+//=============================================================================
+
+static void HandleInterrupt1()
+{
+    if (instances.size() > 0) {
+        instances.at(0)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt2()
+{
+    if (instances.size() > 1) {
+        instances.at(1)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt3()
+{
+    if (instances.size() > 2) {
+        instances.at(2)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt4()
+{
+    if (instances.size() > 3) {
+        instances.at(3)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt5()
+{
+    if (instances.size() > 4) {
+        instances.at(4)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt6()
+{
+    if (instances.size() > 5) {
+        instances.at(5)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt7()
+{
+    if (instances.size() > 6) {
+        instances.at(6)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt8()
+{
+    if (instances.size() > 7) {
+        instances.at(7)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt9()
+{
+    if (instances.size() > 8) {
+        instances.at(8)->HandleInterrupt();
+    }
+}
+
+static void HandleInterrupt10()
+{
+    if (instances.size() > 9) {
+        instances.at(9)->HandleInterrupt();
     }
 }

@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+
 namespace command
 {
 
@@ -16,7 +17,7 @@ public:
 
     uint16_t ReadChannel() const;
 
-    inline void HandleInterrupt(uint32_t current_time);
+    inline void HandleInterrupt();
 
 
 private:
