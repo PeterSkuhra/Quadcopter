@@ -154,7 +154,7 @@ void control::FlightController::Init()
         init_ = true;
     }
 
-    Serial.println("RawYaw[°/s], FilterYaw[°/s]");
+    // Serial.println("RawYaw[°/s], FilterYaw[°/s]");
 }
 
 void control::FlightController::InitPID()
@@ -249,11 +249,16 @@ void control::FlightController::ReadReceiverData()
     // Serial.print("Thr: ");
     // Serial.print(receiver_data_.thrust);
     // Serial.print("  Yaw: ");
-    // Serial.println(receiver_data_.yaw);
+    // Serial.print(receiver_data_.yaw);
     // Serial.print("  Pit: ");
     // Serial.print(receiver_data_.pitch);
     // Serial.print("  Rol: ");
     // Serial.println(receiver_data_.roll);
+
+    for (uint8_t i = 1; i <= 10; ++i) {
+        Serial.print("CH" + String(i) + ": " + String(receiver_->ReadChannel(i)) + "  ");
+    }
+    Serial.println();
 
     // Serial.println(receiver_data_.thrust);
     // Serial.print(" ");
@@ -284,6 +289,8 @@ void control::FlightController::MapReceiverData()
     //                            + String(receiver_data_.pitch) + " "
     //                            + String(receiver_data_.roll));
 }
+// static uint32_t previous = 0;
+// static uint32_t step = 0;
 
 void control::FlightController::ReadIMUData()
 {
@@ -294,10 +301,21 @@ void control::FlightController::ReadIMUData()
         imu_data_.pitch = imu_->GetPitchAngle();
         imu_data_.roll = imu_->GetRollAngle();
 
-        // Serial.print(String(imu_data_.yaw) + ", ");
-
         imu_data_.yaw = yaw_filter_->Filter(imu_data_.yaw);
-        // Serial.println(String(imu_data_.yaw));
+
+
+        // uint32_t current = micros();
+        // uint32_t elapsed = current - previous;
+        //
+        // if (elapsed >= 5000) {
+        //     previous = current;
+        //     Serial.print(String(imu_data_.yaw) + ", ");
+        //
+        //     imu_data_.yaw = yaw_filter_->Filter(imu_data_.yaw);
+        //     Serial.println(String(imu_data_.yaw) + ", " + String(step));
+        //     step += 5;
+        // }
+
 
         //===============NEW - for cascade PID================================
         // imu_data2_.angles.yaw = imu_->GetYawAngle();
