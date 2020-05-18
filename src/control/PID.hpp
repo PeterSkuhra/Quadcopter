@@ -56,14 +56,18 @@ public:
      */
     float GetOutputLimit() const;
 
-
-private:
+    /**
+     *  Structure for PID gains.
+     */
     struct PIDData
     {
         float p;
         float i;
         float d;
     };
+
+
+private:
 
     PIDData gains_;
     PIDData outputs_;

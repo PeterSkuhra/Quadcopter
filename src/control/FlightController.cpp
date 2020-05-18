@@ -48,10 +48,16 @@ control::FlightController::~FlightController()
     delete filter_.pitch;
     delete filter_.roll;
 
-    delete pid_controller_.thrust;
-    delete pid_controller_.yaw;
-    delete pid_controller_.pitch;
-    delete pid_controller_.roll;
+    delete angular_rate_filter_.x;
+    delete angular_rate_filter_.y;
+    delete angular_rate_filter_.z;
+
+    delete pid_controller_.angular_rate.x;
+    delete pid_controller_.angular_rate.y;
+    delete pid_controller_.angular_rate.z;
+    delete pid_controller_.angle.roll;
+    delete pid_controller_.angle.pitch;
+    delete pid_controller_.angle.yaw;
 
     delete esc_manager_;
 }
@@ -152,42 +158,86 @@ void control::FlightController::Init()
         digitalWrite(LED_GREEN_PIN, HIGH);
 
         init_ = true;
-    }
 
-    // Serial.println("RawYaw[°/s], FilterYaw[°/s]");
+        while (receiver_->ReadChannel(1) < 1900) {
+            digitalWrite(LED_ORANGE_PIN, !digitalRead(LED_ORANGE_PIN));
+            delay(100);
+        }
+        digitalWrite(LED_ORANGE_PIN, LOW);
+
+        while (receiver_->ReadChannel(1) > 1050) {
+            digitalWrite(LED_GREEN_PIN, !digitalRead(LED_GREEN_PIN));
+            delay(200);
+        }
+    }
 }
 
 void control::FlightController::InitPID()
 {
-    const float kPGainYaw = 1.5;
-    const float kIGainYaw = 0.01;
-    const float kDGainYaw = 0.0;
-    const float kLimitYaw = 250;
+    /************************Angular rate PID gains***************************/
+    /*************************************************************************/
+    // Angular PID gains for X
+    pid_gains_.angular_rate.x.p = 0;
+    pid_gains_.angular_rate.x.i = 0;
+    pid_gains_.angular_rate.x.d = 0;
 
-    const float kPGainPitch = 0.0;
-    const float kIGainPitch = 0.0;
-    const float kDGainPitch = 50.0;
-    const float kLimitPitch = 300;
+    // Angular PID gains for Y
+    pid_gains_.angular_rate.y.p = 0;
+    pid_gains_.angular_rate.y.i = 0;
+    pid_gains_.angular_rate.y.d = 0;
 
-    const float kPGainRoll = kPGainPitch;
-    const float kIGainRoll = kIGainPitch;
-    const float kDGainRoll = kDGainPitch;
-    const float kLimitRoll = kLimitPitch;
+    // Angular PID gains for Z
+    pid_gains_.angular_rate.z.p = 0;
+    pid_gains_.angular_rate.z.i = 0;
+    pid_gains_.angular_rate.z.d = 0;
 
-    pid_controller_.yaw = new PID(kPGainYaw,
-                                 kIGainYaw,
-                                 kDGainYaw,
-                                 kLimitYaw);
+    /****************************Angle PID gains******************************/
+    /*************************************************************************/
+    // Angle PID gains for X (Roll)
+    pid_gains_.angle.roll.p = 0;
+    pid_gains_.angle.roll.i = 0;
+    pid_gains_.angle.roll.d = 0;
 
-    pid_controller_.pitch = new PID(kPGainPitch,
-                                   kIGainPitch,
-                                   kDGainPitch,
-                                   kLimitPitch);
+    // Angle PID gains for Y (Pitch)
+    pid_gains_.angle.pitch.p = 0;
+    pid_gains_.angle.pitch.i = 0;
+    pid_gains_.angle.pitch.d = 0;
 
-    pid_controller_.roll = new PID(kPGainRoll,
-                                  kIGainRoll,
-                                  kDGainRoll,
-                                  kLimitRoll);
+    // Angle PID gains for Z (Yaw)
+    pid_gains_.angle.yaw.p = 0;
+    pid_gains_.angle.yaw.i = 0;
+    pid_gains_.angle.yaw.d = 0;
+    //=========================================================================
+
+    pid_controller_.angular_rate.x = new PID(pid_gains_.angular_rate.x.p,
+                                             pid_gains_.angular_rate.x.i,
+                                             pid_gains_.angular_rate.x.d,
+                                             200);
+
+    pid_controller_.angular_rate.y = new PID(pid_gains_.angular_rate.y.p,
+                                             pid_gains_.angular_rate.y.i,
+                                             pid_gains_.angular_rate.y.d,
+                                             200);
+
+    pid_controller_.angular_rate.z = new PID(pid_gains_.angular_rate.z.p,
+                                             pid_gains_.angular_rate.z.i,
+                                             pid_gains_.angular_rate.z.d,
+                                             200);
+
+    pid_controller_.angle.roll = new PID(pid_gains_.angle.roll.p,
+                                         pid_gains_.angle.roll.i,
+                                         pid_gains_.angle.roll.d,
+                                         0);
+
+    pid_controller_.angle.pitch = new PID(pid_gains_.angle.pitch.p,
+                                          pid_gains_.angle.pitch.i,
+                                          pid_gains_.angle.pitch.d,
+                                          0);
+
+    pid_controller_.angle.yaw = new PID(pid_gains_.angle.yaw.p,
+                                        pid_gains_.angle.yaw.i,
+                                        pid_gains_.angle.yaw.d,
+                                        0);
 }
 
 void control::FlightController::Control()
@@ -205,6 +255,7 @@ void control::FlightController::Control()
     this->WriteMotorsSpeeds();
 
     float voltage = voltage_filter_->Filter(voltage_sensor_->GetAnalogValue());
+    // Serial.println("Volt: " + String(voltage));
 }
 
 void control::FlightController::InitFilter()
@@ -221,26 +272,17 @@ void control::FlightController::InitFilter()
     filter_.pitch  = new ExponentialFilter<float>(kFilterWeight, receiver_data_.pitch);
     filter_.roll   = new ExponentialFilter<float>(kFilterWeight, receiver_data_.roll);
 
-    yaw_filter_ = new ExponentialFilter<float>(5, 0);
+
     voltage_filter_ = new ExponentialFilter<float>(20, voltage_sensor_->GetAnalogValue());
+
+    // for Cascade PID
+    angular_rate_filter_.x = new ExponentialFilter<float>(10, 0);
+    angular_rate_filter_.y = new ExponentialFilter<float>(10, 0);
+    angular_rate_filter_.z = new ExponentialFilter<float>(10, 0);
 }
 
 void control::FlightController::ReadReceiverData()
 {
-    // receiver_data_.thrust = receiver_->ReadChannel(1);
-    // receiver_data_.yaw = receiver_->ReadChannel(2);
-    // receiver_data_.pitch = receiver_->ReadChannel(3);
-    // receiver_data_.roll = receiver_->ReadChannel(4);
-
-    // Serial.print("1: ");
-    // Serial.print(receiver_->ReadChannel(1));
-    // Serial.print("  2: ");
-    // Serial.print(receiver_->ReadChannel(2));
-    // Serial.print("  3: ");
-    // Serial.print(receiver_->ReadChannel(3));
-    // Serial.print("  4: ");
-    // Serial.println(receiver_->ReadChannel(4));
-
     receiver_data_.thrust = filter_.thrust->Filter(receiver_->ReadChannel(1));
     receiver_data_.yaw    = filter_.yaw->Filter(receiver_->ReadChannel(2));
     receiver_data_.pitch  = filter_.pitch->Filter(receiver_->ReadChannel(3));
@@ -255,14 +297,10 @@ void control::FlightController::ReadReceiverData()
     // Serial.print("  Rol: ");
     // Serial.println(receiver_data_.roll);
 
-    for (uint8_t i = 1; i <= 10; ++i) {
-        Serial.print("CH" + String(i) + ": " + String(receiver_->ReadChannel(i)) + "  ");
-    }
-    Serial.println();
-
-    // Serial.println(receiver_data_.thrust);
-    // Serial.print(" ");
-    // Serial.println((int32_t)filter_typr_[0]->Filter(receiver_data_.thrust));
+    // for (uint8_t i = 1; i <= 10; ++i) {
+    //     Serial.print("CH" + String(i) + ": " + String(receiver_->ReadChannel(i)) + "  ");
+    // }
+    // Serial.println();
 }
 
 void control::FlightController::MapReceiverData()
@@ -297,11 +335,18 @@ void control::FlightController::ReadIMUData()
     if (receiver_->ReadChannel(5) > 1800) {
         imu_->Update();
 
-        imu_data_.yaw = imu_->GetZAngularRate();
-        imu_data_.pitch = imu_->GetPitchAngle();
-        imu_data_.roll = imu_->GetRollAngle();
+        imu_data_.angular_rate.x = imu_->GetXAngularRate();
+        imu_data_.angular_rate.y = imu_->GetYAngularRate();
+        imu_data_.angular_rate.z = imu_->GetZAngularRate();
 
-        imu_data_.yaw = yaw_filter_->Filter(imu_data_.yaw);
+        // imu_data_.angle.yaw = imu_->GetYawAngle();  // netreba
+        imu_data_.angle.pitch = imu_->GetPitchAngle();
+        imu_data_.angle.roll = imu_->GetRollAngle();
+
+
+        imu_data_.angular_rate.x = angular_rate_filter_.x->Filter(imu_data_.angular_rate.x);
+        imu_data_.angular_rate.y = angular_rate_filter_.y->Filter(imu_data_.angular_rate.y);
+        imu_data_.angular_rate.z = angular_rate_filter_.z->Filter(imu_data_.angular_rate.z);
 
 
         // uint32_t current = micros();
@@ -316,79 +361,77 @@ void control::FlightController::ReadIMUData()
         //     step += 5;
         // }
 
-
-        //===============NEW - for cascade PID================================
-        // imu_data2_.angles.yaw = imu_->GetYawAngle();
-        // imu_data2_.angles.pitch = imu_->GetPitchAngle();
-        // imu_data2_.angles.roll = imu_->GetRollAngle();
-        //
-        // imu_data2_.angular_rate.x = imu_->GetXAngularRate();
-        // imu_data2_.angular_rate.y = imu_->GetYAngularRate();
-        // imu_data2_.angular_rate.z = imu_->GetZAngularRate();
     }
     else {
         delay(3);
 
-        imu_data_.yaw = 0;
-        imu_data_.pitch = 0;
-        imu_data_.roll = 0;
-    }
+        imu_data_.angular_rate.x = 0;
+        imu_data_.angular_rate.y = 0;
+        imu_data_.angular_rate.z = 0;
 
-    // Serial.println("YPR: " +
-    //     String(imu_data_.yaw) + ",    " +
-    //     String(imu_data_.pitch) + ",   " +
-    //     String(imu_data_.roll));
+        imu_data_.angle.yaw = 0;
+        imu_data_.angle.pitch = 0;
+        imu_data_.angle.roll = 0;
+    }
 }
 
 void control::FlightController::PIDCalculation()
 {
     if (receiver_->ReadChannel(1) > 1050) {
-        pid_data_.yaw = pid_controller_.yaw->Update(receiver_data_.yaw, imu_data_.yaw);
-        pid_data_.yaw = -pid_data_.yaw;     // TODO: In PID class!!!
-        pid_data_.pitch = pid_controller_.pitch->Update(receiver_data_.pitch, imu_data_.pitch);
-        pid_data_.roll = pid_controller_.roll->Update(receiver_data_.roll, imu_data_.roll);
+        pid_data_.angular_rate.x = pid_controller_.angular_rate.x->Update(
+            receiver_data_.roll,            // setpoint
+            imu_data_.angular_rate.x);      // process
+
+        pid_data_.angular_rate.y = pid_controller_.angular_rate.y->Update(
+            receiver_data_.pitch,
+            imu_data_.angular_rate.y);
+
+        pid_data_.angular_rate.z = pid_controller_.angular_rate.z->Update(
+            receiver_data_.yaw,
+            imu_data_.angular_rate.z);
+
+        pid_data_.angular_rate.z = -pid_data_.angular_rate.z;   // TODO in PID class!!!!!!!!!!!!!!!!!!!
     }
     else {
-        pid_data_.yaw = 0;
-        pid_data_.pitch = 0;
-        pid_data_.roll = 0;
+        pid_data_.angular_rate.x = 0;
+        pid_data_.angular_rate.y = 0;
+        pid_data_.angular_rate.z = 0;
+
+        pid_data_.angle.roll = 0;
+        pid_data_.angle.pitch = 0;
+        pid_data_.angle.yaw = 0;
     }
-    // Serial.print(receiver_data_.roll);
-    // Serial.print(" ");
-    // Serial.print(imu_data_.roll);
-    // Serial.print(" ");
-    // Serial.println(pid_data_.roll);
-
-    // Serial.print(receiver_data_.thrust); Serial.print(" ");
-    // Serial.print(pid_data_.yaw); Serial.print(" ");
-    // Serial.print(pid_data_.pitch); Serial.print(" ");
-    // Serial.print(pid_data_.roll); Serial.println(" ");
-
-    // Serial.println(String(receiver_data_.yaw) + " " + String(pid_data_.yaw));
-    // Serial.println(String(pid_data_.yaw));
-
-    // Serial.println("TYPR: " + String(receiver_data_.thrust) + " " +
-    //                           String(pid_data_.yaw) + " " +
-    //                           String(pid_data_.pitch) + " " +
-    //                           String(pid_data_.roll));
 }
 
 void control::FlightController::CalculateMotorsSpeeds()
 {
     // Front right
-    motors_speeds_[FRONT_RIGHT] = receiver_data_.thrust + pid_data_.yaw +
-                       pid_data_.pitch + pid_data_.roll;
+    motors_speeds_[FRONT_RIGHT] =
+        receiver_data_.thrust +
+        pid_data_.angular_rate.z +
+        pid_data_.angular_rate.y +
+        pid_data_.angular_rate.x;
+
     // Front left
-    motors_speeds_[FRONT_LEFT] = receiver_data_.thrust - pid_data_.yaw +
-                       pid_data_.pitch - pid_data_.roll;
+    motors_speeds_[FRONT_LEFT] =
+        receiver_data_.thrust -
+        pid_data_.angular_rate.z +
+        pid_data_.angular_rate.y -
+        pid_data_.angular_rate.x;
 
     // Back right
-    motors_speeds_[BACK_RIGHT] = receiver_data_.thrust - pid_data_.yaw -
-                       pid_data_.pitch + pid_data_.roll;
+    motors_speeds_[BACK_RIGHT] =
+        receiver_data_.thrust -
+        pid_data_.angular_rate.z -
+        pid_data_.angular_rate.y +
+        pid_data_.angular_rate.x;
 
     // Back left
-    motors_speeds_[BACK_LEFT] = receiver_data_.thrust + pid_data_.yaw -
-                       pid_data_.pitch - pid_data_.roll;
+    motors_speeds_[BACK_LEFT] =
+        receiver_data_.thrust +
+        pid_data_.angular_rate.z -
+        pid_data_.angular_rate.y -
+        pid_data_.angular_rate.x;
 
 
     // Serial.println("FR: " + String(motors_speeds_[FRONT_RIGHT]) +

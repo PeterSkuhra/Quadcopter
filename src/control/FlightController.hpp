@@ -53,12 +53,13 @@ private:
         T z;
     };
 
-    struct IMUData {
-        EulerAngles<float> angles;
-        Axes<float> angular_rate;
+    template <typename T>
+    struct RotaryMotion {
+        EulerAngles<T> angle;
+        Axes<T> angular_rate;
     };
 
-    IMUData imu_data2_;
+
 
     void InitFilter();
     void InitPID();
@@ -82,14 +83,25 @@ private:
     ExponentialFilter<float>* voltage_filter_;
 
     MotionData<int16_t> receiver_data_;
-    MotionData<float> imu_data_;
-    MotionData<float> pid_data_;
-    MotionData<PID*> pid_controller_;
+    //MotionData<float> imu_data_;
+    // MotionData<float> pid_data_;
+    // MotionData<PID*> pid_controller_;
 
     esc::ESCManager* esc_manager_;
     std::vector<int16_t> motors_speeds_;
 
     bool init_;
+
+
+    // For Cascade PID
+    RotaryMotion<float> imu_data_;
+    RotaryMotion<float> pid_data_;
+    RotaryMotion<PID*> pid_controller_;
+    RotaryMotion<PID::PIDData> pid_gains_;
+
+    Axes<ExponentialFilter<float>* > angular_rate_filter_;
+
+    /// end for Cascade PID
 };
 
 }
