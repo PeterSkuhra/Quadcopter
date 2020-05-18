@@ -11,7 +11,7 @@
 using namespace wiring;
 
 #define MIN_PULSE_US   1000
-#define MAX_PULSE_US   1990
+#define MAX_PULSE_US   1982
 
 #define MAX_PITCH_ANGLE         25  //  degrees [°]
 #define MAX_ROLL_ANGLE          25  //  degrees [°]
@@ -43,10 +43,10 @@ control::FlightController::~FlightController()
     delete imu_;
     delete receiver_;
 
-    delete filter_.thrust;
-    delete filter_.yaw;
-    delete filter_.pitch;
-    delete filter_.roll;
+    delete receiver_filter_.thrust;
+    delete receiver_filter_.yaw;
+    delete receiver_filter_.pitch;
+    delete receiver_filter_.roll;
 
     delete angular_rate_filter_.x;
     delete angular_rate_filter_.y;
@@ -169,6 +169,7 @@ void control::FlightController::Init()
             digitalWrite(LED_GREEN_PIN, !digitalRead(LED_GREEN_PIN));
             delay(200);
         }
+        digitalWrite(LED_GREEN_PIN, HIGH);
     }
 }
 
@@ -179,16 +180,16 @@ void control::FlightController::InitPID()
     // Angular PID gains for X
     pid_gains_.angular_rate.x.p = 0;
     pid_gains_.angular_rate.x.i = 0;
-    pid_gains_.angular_rate.x.d = 0;
+    pid_gains_.angular_rate.x.d = 5;
 
     // Angular PID gains for Y
     pid_gains_.angular_rate.y.p = 0;
     pid_gains_.angular_rate.y.i = 0;
-    pid_gains_.angular_rate.y.d = 0;
+    pid_gains_.angular_rate.y.d = 5;
 
     // Angular PID gains for Z
-    pid_gains_.angular_rate.z.p = 0;
-    pid_gains_.angular_rate.z.i = 0;
+    pid_gains_.angular_rate.z.p = 3;
+    pid_gains_.angular_rate.z.i = 0.02;
     pid_gains_.angular_rate.z.d = 0;
 
     /****************************Angle PID gains******************************/
@@ -212,17 +213,17 @@ void control::FlightController::InitPID()
     pid_controller_.angular_rate.x = new PID(pid_gains_.angular_rate.x.p,
                                              pid_gains_.angular_rate.x.i,
                                              pid_gains_.angular_rate.x.d,
-                                             200);
+                                             300);
 
     pid_controller_.angular_rate.y = new PID(pid_gains_.angular_rate.y.p,
                                              pid_gains_.angular_rate.y.i,
                                              pid_gains_.angular_rate.y.d,
-                                             200);
+                                             300);
 
     pid_controller_.angular_rate.z = new PID(pid_gains_.angular_rate.z.p,
                                              pid_gains_.angular_rate.z.i,
                                              pid_gains_.angular_rate.z.d,
-                                             200);
+                                             300);
 
     pid_controller_.angle.roll = new PID(pid_gains_.angle.roll.p,
                                          pid_gains_.angle.roll.i,
@@ -239,9 +240,16 @@ void control::FlightController::InitPID()
                                         pid_gains_.angle.yaw.d,
                                         0);
 }
+static uint32_t previous = 0;
+static uint32_t current = 0;
+static uint32_t elapsed = 0;
+static uint32_t loop_time = 0;
+// static uint32_t step = 0;
 
 void control::FlightController::Control()
 {
+    loop_time = micros();
+
     this->ReadReceiverData();
 
     this->MapReceiverData();
@@ -256,6 +264,8 @@ void control::FlightController::Control()
 
     float voltage = voltage_filter_->Filter(voltage_sensor_->GetAnalogValue());
     // Serial.println("Volt: " + String(voltage));
+
+    while ((micros() - loop_time) < 10000);
 }
 
 void control::FlightController::InitFilter()
@@ -267,10 +277,10 @@ void control::FlightController::InitFilter()
 
     const uint8_t kFilterWeight = 10;
 
-    filter_.thrust = new ExponentialFilter<float>(kFilterWeight, receiver_data_.thrust);
-    filter_.yaw    = new ExponentialFilter<float>(kFilterWeight, receiver_data_.yaw);
-    filter_.pitch  = new ExponentialFilter<float>(kFilterWeight, receiver_data_.pitch);
-    filter_.roll   = new ExponentialFilter<float>(kFilterWeight, receiver_data_.roll);
+    receiver_filter_.thrust = new ExponentialFilter<float>(kFilterWeight, receiver_data_.thrust);
+    receiver_filter_.yaw    = new ExponentialFilter<float>(kFilterWeight, receiver_data_.yaw);
+    receiver_filter_.pitch  = new ExponentialFilter<float>(kFilterWeight, receiver_data_.pitch);
+    receiver_filter_.roll   = new ExponentialFilter<float>(kFilterWeight, receiver_data_.roll);
 
 
     voltage_filter_ = new ExponentialFilter<float>(20, voltage_sensor_->GetAnalogValue());
@@ -283,10 +293,10 @@ void control::FlightController::InitFilter()
 
 void control::FlightController::ReadReceiverData()
 {
-    receiver_data_.thrust = filter_.thrust->Filter(receiver_->ReadChannel(1));
-    receiver_data_.yaw    = filter_.yaw->Filter(receiver_->ReadChannel(2));
-    receiver_data_.pitch  = filter_.pitch->Filter(receiver_->ReadChannel(3));
-    receiver_data_.roll   = filter_.roll->Filter(receiver_->ReadChannel(4));
+    receiver_data_.thrust = receiver_filter_.thrust->Filter(receiver_->ReadChannel(1));
+    receiver_data_.yaw    = receiver_filter_.yaw->Filter(receiver_->ReadChannel(2));
+    receiver_data_.pitch  = receiver_filter_.pitch->Filter(receiver_->ReadChannel(3));
+    receiver_data_.roll   = receiver_filter_.roll->Filter(receiver_->ReadChannel(4));
 
     // Serial.print("Thr: ");
     // Serial.print(receiver_data_.thrust);
@@ -323,23 +333,22 @@ void control::FlightController::MapReceiverData()
                                 -MAX_ROLL_ANGLE,
                                 MAX_ROLL_ANGLE);
 
-    // Serial.println("MAP_YPR: " + String(receiver_data_.yaw) + " "
+    // Serial.println(String(receiver_data_.yaw) + " "
     //                            + String(receiver_data_.pitch) + " "
     //                            + String(receiver_data_.roll));
 }
-// static uint32_t previous = 0;
-// static uint32_t step = 0;
 
 void control::FlightController::ReadIMUData()
 {
     if (receiver_->ReadChannel(5) > 1800) {
+
         imu_->Update();
 
         imu_data_.angular_rate.x = imu_->GetXAngularRate();
         imu_data_.angular_rate.y = imu_->GetYAngularRate();
         imu_data_.angular_rate.z = imu_->GetZAngularRate();
 
-        // imu_data_.angle.yaw = imu_->GetYawAngle();  // netreba
+        imu_data_.angle.yaw = imu_->GetYawAngle();  // netreba
         imu_data_.angle.pitch = imu_->GetPitchAngle();
         imu_data_.angle.roll = imu_->GetRollAngle();
 
@@ -348,6 +357,13 @@ void control::FlightController::ReadIMUData()
         imu_data_.angular_rate.y = angular_rate_filter_.y->Filter(imu_data_.angular_rate.y);
         imu_data_.angular_rate.z = angular_rate_filter_.z->Filter(imu_data_.angular_rate.z);
 
+        // Serial.println(String(imu_data_.angular_rate.x) + " " +
+        //                String(imu_data_.angular_rate.y) + " " +
+        //                String(imu_data_.angular_rate.z));
+
+        // Serial.println(String(imu_data_.angle.roll) + " " +
+        //                String(imu_data_.angle.pitch) + " " +
+        //                String(imu_data_.angle.yaw));
 
         // uint32_t current = micros();
         // uint32_t elapsed = current - previous;
@@ -360,7 +376,6 @@ void control::FlightController::ReadIMUData()
         //     Serial.println(String(imu_data_.yaw) + ", " + String(step));
         //     step += 5;
         // }
-
     }
     else {
         delay(3);
@@ -391,6 +406,14 @@ void control::FlightController::PIDCalculation()
             imu_data_.angular_rate.z);
 
         pid_data_.angular_rate.z = -pid_data_.angular_rate.z;   // TODO in PID class!!!!!!!!!!!!!!!!!!!
+
+        // Serial.println(
+        //     String(pid_data_.angular_rate.x) + " " +
+        //     String(pid_data_.angular_rate.y) + " " +
+        //     String(pid_data_.angular_rate.z));
+
+        Serial.println(String(receiver_data_.roll) + " " +
+            String(pid_data_.angular_rate.x));
     }
     else {
         pid_data_.angular_rate.x = 0;

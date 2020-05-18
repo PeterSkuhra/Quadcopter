@@ -72,36 +72,28 @@ private:
 
 private:
 
-    sensing::voltage::ISensor* voltage_sensor_;
+    bool init_;
 
     sensing::imu::IIMU* imu_;
     command::IReceiver* receiver_;
+    esc::ESCManager* esc_manager_;
+    sensing::voltage::ISensor* voltage_sensor_;
 
-    MotionData<ExponentialFilter<float>* > filter_;
 
-    ExponentialFilter<float>* yaw_filter_;
+    MotionData<ExponentialFilter<float>* > receiver_filter_;
+    Axes<ExponentialFilter<float>* > angular_rate_filter_;
     ExponentialFilter<float>* voltage_filter_;
 
+
+    RotaryMotion<PID::PIDData> pid_gains_;
+    RotaryMotion<PID*> pid_controller_;
+
+
     MotionData<int16_t> receiver_data_;
-    //MotionData<float> imu_data_;
-    // MotionData<float> pid_data_;
-    // MotionData<PID*> pid_controller_;
-
-    esc::ESCManager* esc_manager_;
-    std::vector<int16_t> motors_speeds_;
-
-    bool init_;
-
-
-    // For Cascade PID
     RotaryMotion<float> imu_data_;
     RotaryMotion<float> pid_data_;
-    RotaryMotion<PID*> pid_controller_;
-    RotaryMotion<PID::PIDData> pid_gains_;
+    std::vector<int16_t> motors_speeds_;
 
-    Axes<ExponentialFilter<float>* > angular_rate_filter_;
-
-    /// end for Cascade PID
 };
 
 }
