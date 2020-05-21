@@ -1,8 +1,13 @@
 #include "PID.hpp"
 
 
-control::PID::PID(float p_gain, float i_gain, float d_gain, float out_limit) :
+control::PID::PID(float p_gain,
+                  float i_gain,
+                  float d_gain,
+                  float out_limit,
+                  bool reverse_output) :
     output_limit_(out_limit),
+    reverse_output_(reverse_output),
     prev_time_(0)
 {
     gains_.p = p_gain;
@@ -21,18 +26,24 @@ float control::PID::Update(float setpoint, float process)
 
     outputs_.p = kError * gains_.p;
     outputs_.i = (outputs_.i + (kError * elapsed_time)) * gains_.i;
-    // outputs_.i += (kError * gains_.i);
-    outputs_.d = ((kError - kPrevError) / elapsed_time) * gains_.d;
-    // outputs_.d = (kError - kPrevError) * gains_.d;
+    // outputs_.i += (kError * gains_.i);           // POZOR, robi blbosti!!!!!!!!!!!!!!!!!!!!
+    // outputs_.d = ((kError - kPrevError) / elapsed_time) * gains_.d;
+    outputs_.d = (kError - kPrevError) * gains_.d;
 
     prev_setpoint_ = setpoint;
     prev_process_ = process;
 
     pid_output = outputs_.p + outputs_.i + outputs_.d;
 
+    pid_output = constrain(pid_output, -output_limit_, output_limit_);
+
+    if (reverse_output_) {
+        pid_output = -pid_output;
+    }
+
     prev_time_ = current_time;
 
-    return constrain(pid_output, -output_limit_, output_limit_);
+    return pid_output;
 }
 
 void control::PID::SetPIDGains(float p_gain, float i_gain, float d_gain)

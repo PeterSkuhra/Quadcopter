@@ -17,7 +17,11 @@ public:
      *  @param i_gain   I gain value
      *  @param d_gain   D gain value
      */
-    PID(float p_gain, float i_gain, float d_gain, float out_limit);
+    PID(float p_gain,
+        float i_gain,
+        float d_gain,
+        float out_limit,
+        bool reverse_output = false);
 
     /**
      *  Returns output of PID controller.
@@ -77,6 +81,7 @@ private:
     uint32_t prev_time_;
 
     float output_limit_;
+    bool reverse_output_;
 };
 
 }
