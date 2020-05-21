@@ -94,6 +94,9 @@ private:
     RotaryMotion<float> pid_data_;
     std::vector<int16_t> motors_speeds_;
 
+    bool automatic_stabilization_;
+    uint8_t pid_out_step_;
+
 };
 
 }
