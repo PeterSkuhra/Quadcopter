@@ -6,6 +6,7 @@
 #include "sensing/imu/IMUReader.hpp"
 #include "sensing/voltage/VoltageSensor.hpp"
 #include "esc/ESC30A.hpp"
+#include "visual/display/OLED_128x32.hpp"
 
 
 using namespace wiring;
@@ -33,9 +34,18 @@ control::FlightController::FlightController() :
 
     esc_manager_ = new esc::ESCManager(wiring::kESCPins, *voltage_sensor_);
 
+    leds_.reserve(kLEDPins.size());
+    for (uint8_t i = 0; i < kLEDPins.size(); ++i) {
+        leds_.push_back(new visual::led::LED(kLEDPins.at(i)));
+    }
+
+    display_ = new visual::display::OLED_128x32(kIntroText,
+                                                OLED_128X32_I2C_ADDRESS);
+
     motors_speeds_.clear();
     motors_speeds_.resize(MOTOR_COUNT);
 
+    this->InitFilter();
     this->InitPID();
 }
 
@@ -68,111 +78,36 @@ void control::FlightController::Init()
 {
     if (!init_) {
 
-        pinMode(LED_ORANGE_PIN, OUTPUT);
-        pinMode(LED_GREEN_PIN, OUTPUT);
-        pinMode(LED_RED_PIN, OUTPUT);
-        digitalWrite(LED_ORANGE_PIN, HIGH);
+        leds_.at(ORANGE)->SetOn();
 
-        // Ak je pripojeny ovladac a je SWA paka hore, tak cakaj na kalibraciu
-        // while (receiver_->ReadChannel(5) > 1200) {
+        display_->Begin();
 
-        // delay(1000);
-        // Serial.println(F("\nWaiting..."));
-        // // while (!(receiver_->ReadChannel(1) > 1800));
-        //
-        // Serial.println(F("\nCalibrating all ESC..."));
-        // esc_manager_->Calibrate();
-        // Serial.println(F("\nCalibration all ESC OK :)"));
+        this->InitIMU();
 
-        // Serial.println("CH5: " + String(receiver_->ReadChannel(5)));
-        // Serial.println("CH6: " + String(receiver_->ReadChannel(6)));
-        //
-        //     // Ak bude SWB paka dole, tak kalibruj
-        //     if ((receiver_->ReadChannel(6) < 1200) &&
-        //         (receiver_->ReadChannel(5) > 1800)) {
-        //         Serial.println(F("\nCalibrating all ESC..."));
-        //
-        //         if (esc_manager_->Calibrate()) {
-        //             Serial.println(F("\nCalibration all ESC OK :)"));
-        //             // break;
-        //         }
-        //         else {
-        //             Serial.println(F("\nCalibration ESC NOK :("));
-        //             while (true);
-        //         }
-        //     }
-        // }
-
-        // ESC's
-        // delay(500);
-        // if (receiver_->ReadChannel(10) < 1200 && receiver_->ReadChannel(10) > 900) {
-        //     Serial.println(F("\nCalibrating all ESC..."));
-        //
-        //     if (esc_manager_->Calibrate()) {
-        //         Serial.println(F("\nCalibration all ESC OK :)"));
-        //     }
-        //     else {
-        //         Serial.println(F("\nCalibration ESC NOK :("));
-        //     }
-        // }
-
-        // while (receiver_->ReadChannel(5) < 1200) {
-        //     delay(10);
-        //     Serial.println("CH5: " + String(receiver_->ReadChannel(5)));
-        // }
-
-        // IMU
-        imu_->Begin();
-
-        Serial.println(F("\nCalibrating imu..."));
-        if (imu_->Calibrate()) {
-            Serial.println(F("\nCalibration imu OK :)"));
-        }
-        else {
-            Serial.println(F("\nCalibration imu NOK :("));
-            digitalWrite(LED_RED_PIN, HIGH);
-            //while(true);
-        }
-        delay(100);
-
-        // Receiver
-        repeat_calibration:
-        Serial.println(F("\nCalibrating receiver..."));
-        if (receiver_->Calibrate()) {
-            Serial.println(F("\nCalibration rec OK :)"));
-        }
-        else {
-            Serial.println(F("\nCalibration rec NOK :("));
-            while(true) {
-                digitalWrite(LED_RED_PIN, HIGH);
-
-                if (receiver_->ReadChannel(1) > 1900) {
-                    digitalWrite(LED_RED_PIN, LOW);
-                    goto repeat_calibration;
-                }
-            }
-        }
-
-
-        this->InitFilter();
-
-        digitalWrite(LED_ORANGE_PIN, LOW);
-        digitalWrite(LED_GREEN_PIN, HIGH);
+        this->InitReceiver();
 
         init_ = true;
 
-        while (receiver_->ReadChannel(1) < 1900) {
-            digitalWrite(LED_ORANGE_PIN, !digitalRead(LED_ORANGE_PIN));
-            delay(100);
-        }
-        digitalWrite(LED_ORANGE_PIN, LOW);
-
-        while (receiver_->ReadChannel(1) > 1050) {
-            digitalWrite(LED_GREEN_PIN, !digitalRead(LED_GREEN_PIN));
-            delay(200);
-        }
-        digitalWrite(LED_GREEN_PIN, HIGH);
+        this->PrintInfo("All is READY!!", true);
+        this->PrintInfo("Happy FLY!!!");
     }
+}
+
+void control::FlightController::Control()
+{
+    this->ReadReceiverData();
+
+    this->MapReceiverData();
+
+    this->ReadIMUData();
+
+    this->PIDCalculation();
+
+    this->CalculateMotorsSpeeds();
+
+    this->WriteMotorsSpeeds();
+
+    float voltage = voltage_filter_->Filter(voltage_sensor_->GetAnalogValue());
 }
 
 void control::FlightController::InitPID()
@@ -241,33 +176,8 @@ void control::FlightController::InitPID()
                                         pid_gains_.angle.yaw.i,
                                         pid_gains_.angle.yaw.d,
                                         0);
-}
-static uint32_t previous = 0;
-static uint32_t current = 0;
-static uint32_t elapsed = 0;
-static uint32_t loop_time = 0;
-// static uint32_t step = 0;
 
-void control::FlightController::Control()
-{
-    loop_time = micros();
-
-    this->ReadReceiverData();
-
-    this->MapReceiverData();
-
-    this->ReadIMUData();
-
-    this->PIDCalculation();
-
-    this->CalculateMotorsSpeeds();
-
-    this->WriteMotorsSpeeds();
-
-    float voltage = voltage_filter_->Filter(voltage_sensor_->GetAnalogValue());
-    // Serial.println("Volt: " + String(voltage));
-
-    // while ((micros() - loop_time) < 10000);
+    this->PrintInfo("Init PID done!");
 }
 
 void control::FlightController::InitFilter()
@@ -291,6 +201,71 @@ void control::FlightController::InitFilter()
     angular_rate_filter_.x = new ExponentialFilter<float>(20, 0);
     angular_rate_filter_.y = new ExponentialFilter<float>(20, 0);
     angular_rate_filter_.z = new ExponentialFilter<float>(20, 0);
+
+    PrintInfo("Init filter done!");
+}
+
+void control::FlightController::InitIMU()
+{
+    imu_->Begin();
+
+    this->PrintInfo("Calibrating IMU...", true);
+
+    if (imu_->Calibrate()) {
+        this->PrintInfo("Calib. IMU OK!");
+    }
+    else {
+        this->PrintInfo("Calib. IMU NOK!", true);
+        leds_.at(RED)->SetOn();
+    }
+    delay(100);
+}
+
+void control::FlightController::InitReceiver()
+{
+    repeat_calibration:
+    PrintInfo("Calib. receiver...");
+
+    if (receiver_->Calibrate()) {
+        PrintInfo("Calib. receiver OK!");
+    }
+    else {
+        PrintInfo("Calib. receiver NOK!", true);
+
+        while(true) {
+            leds_.at(RED)->SetOn();
+
+            if (receiver_->ReadChannel(1) > 1900) {
+                leds_.at(RED)->SetOff();
+                goto repeat_calibration;
+            }
+        }
+    }
+
+    leds_.at(ORANGE)->SetOff();
+    leds_.at(GREEN)->SetOn();
+    delay(1000);
+
+
+    leds_.at(ORANGE)->SetBlinkInterval(100, 100);
+    leds_.at(ORANGE)->StartBlink();
+
+    this->PrintInfo("Thrust stick UP!");
+
+    while (receiver_->ReadChannel(1) < 1900) {
+        leds_.at(ORANGE)->Update();
+    }
+    leds_.at(ORANGE)->SetOff();
+
+    leds_.at(GREEN)->SetBlinkInterval(500, 300);
+    leds_.at(GREEN)->StartBlink();
+
+    this->PrintInfo("Thrust stick DOWN!");
+
+    while (receiver_->ReadChannel(1) > 1050) {
+        leds_.at(GREEN)->Update();
+    }
+    leds_.at(GREEN)->SetOn();
 }
 
 void control::FlightController::ReadReceiverData()
@@ -299,20 +274,6 @@ void control::FlightController::ReadReceiverData()
     receiver_data_.yaw    = receiver_filter_.yaw->Filter(receiver_->ReadChannel(2));
     receiver_data_.pitch  = receiver_filter_.pitch->Filter(receiver_->ReadChannel(3));
     receiver_data_.roll   = receiver_filter_.roll->Filter(receiver_->ReadChannel(4));
-
-    // Serial.print("Thr: ");
-    // Serial.print(receiver_data_.thrust);
-    // Serial.print("  Yaw: ");
-    // Serial.print(receiver_data_.yaw);
-    // Serial.print("  Pit: ");
-    // Serial.print(receiver_data_.pitch);
-    // Serial.print("  Rol: ");
-    // Serial.println(receiver_data_.roll);
-
-    // for (uint8_t i = 1; i <= 10; ++i) {
-    //     Serial.print("CH" + String(i) + ": " + String(receiver_->ReadChannel(i)) + "  ");
-    // }
-    // Serial.println();
 }
 
 void control::FlightController::MapReceiverData()
@@ -336,10 +297,16 @@ void control::FlightController::MapReceiverData()
                                 MAX_PULSE_US,
                                 -MAX_ROLL_ANGLE,
                                 MAX_ROLL_ANGLE);
+}
 
-    // Serial.println(String(receiver_data_.yaw) + " "
-    //                            + String(receiver_data_.pitch) + " "
-    //                            + String(receiver_data_.roll));
+void control::FlightController::PrintInfo(const char* text, bool clear = false)
+{
+    if (clear) {
+        display_->Clear();
+    }
+
+    Serial.println(text);
+    display_->Print(text);
 }
 
 void control::FlightController::ReadIMUData()
@@ -360,26 +327,6 @@ void control::FlightController::ReadIMUData()
         imu_data_.angular_rate.x = angular_rate_filter_.x->Filter(imu_data_.angular_rate.x);
         imu_data_.angular_rate.y = angular_rate_filter_.y->Filter(imu_data_.angular_rate.y);
         imu_data_.angular_rate.z = angular_rate_filter_.z->Filter(imu_data_.angular_rate.z);
-
-        // Serial.println(String(imu_data_.angular_rate.x) + " " +
-        //                String(imu_data_.angular_rate.y) + " " +
-        //                String(imu_data_.angular_rate.z));
-
-        // Serial.println(String(imu_data_.angle.roll) + " " +
-        //                String(imu_data_.angle.pitch) + " " +
-        //                String(imu_data_.angle.yaw));
-
-        // uint32_t current = micros();
-        // uint32_t elapsed = current - previous;
-        //
-        // if (elapsed >= 5000) {
-        //     previous = current;
-        //     Serial.print(String(imu_data_.yaw) + ", ");
-        //
-        //     imu_data_.yaw = yaw_filter_->Filter(imu_data_.yaw);
-        //     Serial.println(String(imu_data_.yaw) + ", " + String(step));
-        //     step += 5;
-        // }
     }
     else {
         delay(3);
@@ -411,11 +358,7 @@ void control::FlightController::PIDCalculation()
                 pid_data_.angle.pitch = pid_controller_.angle.pitch->Update(
                     receiver_data_.pitch,
                     imu_data_.angle.pitch);
-
-                // Serial.println("RollOut: " + String(pid_data_.angle.roll) +
-                //     " PitchOut: " + String(pid_data_.angle.pitch));
             }
-
 
             //Inner PID loop
             pid_data_.angular_rate.x = pid_controller_.angular_rate.x->Update(
@@ -452,15 +395,6 @@ void control::FlightController::PIDCalculation()
             // pid_data_.angular_rate.y = -pid_data_.angular_rate.y;
             pid_data_.angular_rate.z = -pid_data_.angular_rate.z;   // TODO in PID class!!!!!!!!!!!!!!!!!!!
         }
-
-
-        // Serial.println(
-        //     String(pid_data_.angular_rate.x) + " " +
-        //     String(pid_data_.angular_rate.y) + " " +
-        //     String(pid_data_.angular_rate.z));
-
-        // Serial.println(String(receiver_data_.roll) + " " +
-        //     String(pid_data_.angular_rate.x));
     }
     else {
         pid_data_.angular_rate.x = 0;
@@ -502,12 +436,6 @@ void control::FlightController::CalculateMotorsSpeeds()
         pid_data_.angular_rate.z -
         pid_data_.angular_rate.y -
         pid_data_.angular_rate.x;
-
-
-    // Serial.println("FR: " + String(motors_speeds_[FRONT_RIGHT]) +
-    //                "  FL: " + String(motors_speeds_[FRONT_LEFT]) +
-    //                "  BR: " + String(motors_speeds_[BACK_RIGHT]) +
-    //                "  BL: " + String(motors_speeds_[BACK_LEFT]));
 }
 
 void control::FlightController::WriteMotorsSpeeds()

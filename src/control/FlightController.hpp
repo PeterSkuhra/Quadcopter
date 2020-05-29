@@ -10,6 +10,9 @@
 #include "sensing/voltage/ISensor.hpp"
 #include "esc/ESCManager.hpp"
 
+#include "visual/led/LED.hpp"
+#include "visual/display/IDisplay.hpp"
+
 #include "PID.hpp"
 #include "ExponentialFilter.hpp"
 
@@ -59,10 +62,13 @@ private:
         Axes<T> angular_rate;
     };
 
-
-
-    void InitFilter();
     void InitPID();
+    void InitFilter();
+    void InitIMU();
+    void InitReceiver();
+
+    void PrintInfo(const char* text, bool clear = false);
+
     void ReadReceiverData();
     void MapReceiverData();
     void ReadIMUData();
@@ -78,6 +84,8 @@ private:
     command::IReceiver* receiver_;
     esc::ESCManager* esc_manager_;
     sensing::voltage::ISensor* voltage_sensor_;
+    std::vector<visual::led::LED*> leds_;
+    visual::display::IDisplay* display_;
 
 
     MotionData<ExponentialFilter<float>* > receiver_filter_;

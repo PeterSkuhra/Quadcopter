@@ -50,6 +50,12 @@ static const std::vector<uint8_t> kReceiverPins {
 #define MPU6050_INT_PIN         2
 
 /******************************************************************************
+ *  OLED display 128x32
+ *****************************************************************************/
+#define OLED_128X32_I2C_ADDRESS     0x3C
+static const char* kIntroText = "QUADCOPTER\nPeter Skuhra";
+
+/******************************************************************************
  *  Ultrasonic sensor
  *****************************************************************************/
 // #define 23
@@ -95,6 +101,16 @@ static const std::vector<uint8_t> kESCPins {
 #define LED_RED_PIN         22
 #define LED_ORANGE_PIN      24
 #define LED_GREEN_PIN       26
+
+static const std::vector<uint8_t> kLEDPins {
+    LED_RED_PIN,
+    LED_ORANGE_PIN,
+    LED_GREEN_PIN
+};
+
+#define RED     0
+#define ORANGE  1
+#define GREEN   2
 
 
 }
