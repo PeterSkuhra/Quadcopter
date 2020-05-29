@@ -6,6 +6,9 @@
 namespace visual
 {
 
+namespace led
+{
+
 class LED
 {
 public:
@@ -46,6 +49,7 @@ private:
     uint32_t previous_time_;
 };
 
+}
 }
 
 #endif

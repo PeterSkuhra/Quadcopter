@@ -1,6 +1,6 @@
 #include "LED.hpp"
 
-visual::LED::LED(uint8_t pin) :
+visual::led::LED::LED(uint8_t pin) :
     pin_(pin),
     led_state_(false),
     on_time_ms_(500),
@@ -9,7 +9,7 @@ visual::LED::LED(uint8_t pin) :
     pinMode(pin_, OUTPUT);
 }
 
-visual::LED::LED(uint8_t pin, uint16_t on_time_ms, uint16_t off_time_ms) :
+visual::led::LED::LED(uint8_t pin, uint16_t on_time_ms, uint16_t off_time_ms) :
     pin_(pin),
     led_state_(false),
     on_time_ms_(on_time_ms),
@@ -18,33 +18,33 @@ visual::LED::LED(uint8_t pin, uint16_t on_time_ms, uint16_t off_time_ms) :
     pinMode(pin_, OUTPUT);
 }
 
-void visual::LED::SetOn()
+void visual::led::LED::SetOn()
 {
     led_state_ = true;
     blink_started_ = false;
     digitalWrite(pin_, led_state_);
 }
 
-void visual::LED::SetOff()
+void visual::led::LED::SetOff()
 {
     led_state_ = false;
     blink_started_ = false;
     digitalWrite(pin_, led_state_);
 }
 
-void visual::LED::StartBlink()
+void visual::led::LED::StartBlink()
 {
     blink_started_ = true;
 }
 
-void visual::LED::StopBlink()
+void visual::led::LED::StopBlink()
 {
     blink_started_ = false;
     led_state_ = false;
     digitalWrite(pin_, led_state_);
 }
 
-void visual::LED::Update()
+void visual::led::LED::Update()
 {
     if (blink_started_) {
         uint32_t current_time = millis();
@@ -63,18 +63,18 @@ void visual::LED::Update()
     }
 }
 
-void visual::LED::SetBlinkInterval(uint16_t on_time_ms, uint16_t off_time_ms)
+void visual::led::LED::SetBlinkInterval(uint16_t on_time_ms, uint16_t off_time_ms)
 {
     on_time_ms_ = on_time_ms;
     off_time_ms_ = off_time_ms;
 }
 
-uint16_t visual::LED::GetOnTime() const
+uint16_t visual::led::LED::GetOnTime() const
 {
     return on_time_ms_;
 }
 
-uint16_t visual::LED::GetOffTime() const
+uint16_t visual::led::LED::GetOffTime() const
 {
     return off_time_ms_;
 }
