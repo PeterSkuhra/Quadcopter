@@ -3,18 +3,20 @@
 #define LIBCALL_ENABLEINTERRUPT
 #include <EnableInterrupt.h>
 
-#define DEBUG_PIN   25
+
+/**
+ *  Data from DMP is ready
+ */
+static volatile bool dmp_data_ready = false;
 
 /**
  *  Interrupt routine.
+ *  Executed when data from DMP is ready.
  */
-static volatile bool dmp_data_ready = false;
 static void SetDMPDataReady()
 {
     dmp_data_ready = true;
-    digitalWrite(DEBUG_PIN, HIGH);
 }
-
 
 
 namespace imu
@@ -86,8 +88,6 @@ void sensing::imu::IMUReader::Begin()
         enableInterrupt(kInterruptPin_, SetDMPDataReady, RISING);
         mpu_interrupt_status_ = mpu_->getIntStatus();
         packet_size_ = mpu_->dmpGetFIFOPacketSize();
-
-        pinMode(DEBUG_PIN, OUTPUT);
     }
     else {
         dmp_ready_ = false;
@@ -130,7 +130,6 @@ void sensing::imu::IMUReader::Update()
         mpu_->dmpGetYawPitchRoll(ypr_, &quaternion_, &gravity_);
 
         dmp_data_ready = false;
-        digitalWrite(DEBUG_PIN, LOW);
     }
 }
 
