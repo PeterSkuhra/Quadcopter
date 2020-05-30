@@ -23,6 +23,7 @@ namespace esc
 class ESC30A : public IESC
 {
  public:
+
      /**
       *  Constructor.
       *
@@ -66,7 +67,9 @@ class ESC30A : public IESC
      */
     uint16_t GetRPM(float battery_voltage) override;
 
+
 private:
+
     /**
      *  Enum type of 16-bit timers.
      */
@@ -103,8 +106,8 @@ private:
      */
     static void WritePWM12bit(uint8_t pin, uint16_t value);
 
-
  private:
+
     /**
      *  Pin number of motor control.
      */

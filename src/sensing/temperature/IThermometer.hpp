@@ -6,15 +6,29 @@ namespace sensing
 namespace temperature
 {
 
+/******************************************************************************
+ *  Interface for general thermometer. You can read temperature from any device.
+ *****************************************************************************/
 class IThermometer
 {
-public:
+ public:
 
-    virtual ~IThermometer() = default;
+     /**
+      * Default desctructor.
+      */
+     virtual ~IThermometer() = default;
 
-    virtual void Update() = 0;
+     /**
+      * Updates data from thermometer.
+      */
+     virtual void Update() = 0;
 
-    virtual float GetTemperature() const = 0;
+     /**
+      * Returns temperature value.
+      *
+      * @return temperature value
+      */
+     virtual float GetTemperature() const = 0;
 };
 
 }

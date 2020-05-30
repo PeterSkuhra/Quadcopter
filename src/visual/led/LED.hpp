@@ -9,44 +9,109 @@ namespace visual
 namespace led
 {
 
+/******************************************************************************
+ *  Class for control LED. You can set on and off. Also you can set blinking
+ *  with different on and off times.
+ *****************************************************************************/
 class LED
 {
-public:
+ public:
 
-    LED(uint8_t pin);
+     /**
+      * Constructor.
+      *
+      * @param pin  LED pin number
+      */
+     LED(uint8_t pin);
 
-    LED(uint8_t pin, uint16_t on_time_ms, uint16_t off_time_ms);
+     /**
+      * Constructor.
+      *
+      * @param pin          LED pin number
+      * @param on_time_ms   ON time in ms during blinking.
+      * @param off_time_ms  OFF time in ms during blinking.
+      */
+     LED(uint8_t pin, uint16_t on_time_ms, uint16_t off_time_ms);
 
-    void SetOn();
+     /**
+      * Sets LED on.
+      */
+     void SetOn();
 
-    void SetOff();
+     /**
+      * Sets LED off.
+      */
+     void SetOff();
 
-    void StartBlink();
+     /**
+      * Starts blinking.
+      */
+     void StartBlink();
 
-    void StopBlink();
+     /**
+      * Stops blinking.
+      */
+     void StopBlink();
 
-    void Update();
+     /**
+      * Updates LED state during blinking.
+      */
+     void Update();
 
-    void SetBlinkInterval(uint16_t on_time_ms, uint16_t off_time_ms);
+     /**
+      * Sets ON and OFF time interval during blinking.
+      *
+      * @param on_time_ms   ON time in ms during blinking.
+      * @param off_time_ms  OFF time in ms during blinking.
+      */
+     void SetBlinkInterval(uint16_t on_time_ms, uint16_t off_time_ms);
 
-    uint16_t GetOnTime() const;
+     /**
+      * Returns ON time in ms.
+      *
+      * @return ON time in ms
+      */
+     uint16_t GetOnTime() const;
 
-    uint16_t GetOffTime() const;
+     /**
+      * Returns OFF time in ms.
+      *
+      * @return OFF time in ms
+      */
+     uint16_t GetOffTime() const;
 
 
-private:
+ private:
 
-    const uint8_t pin_;
+     /**
+      * LED pin number.
+      */
+     const uint8_t pin_;
 
-    bool led_state_;
+     /**
+      * LED state (true/false = ON/OFF)
+      */
+     bool led_state_;
 
-    bool blink_started_;
+     /**
+      * Blinking started.
+      */
+     bool blink_started_;
 
-    uint16_t on_time_ms_;
+     /**
+      * ON time in ms for blinking.
+      */
+     uint16_t on_time_ms_;
 
-    uint16_t off_time_ms_;
+     /**
+      * OFF time in ms for blinking.
+      */
+     uint16_t off_time_ms_;
 
-    uint32_t previous_time_;
+     /**
+      * Previous time of change LED state.
+      */
+     uint32_t previous_time_;
 };
 
 }

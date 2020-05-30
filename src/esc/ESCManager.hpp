@@ -16,7 +16,7 @@ namespace esc
  *  The class represents the manager of several ESC's.
  *  The number of managing ESC's depends on number of elements in the vector.
  *
- *  
+ *
  *
  *  Class implements "ICalibratable" interface.
  *  So, you can calibrate all ESC's at the same time.

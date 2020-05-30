@@ -19,47 +19,83 @@ namespace command
 
 #define CALIBRATABLE_CHANNEL_COUNT  4
 
-// // Transmitter sticks - channel number
-// #define THRUST  1
-// #define YAW     2
-// #define PITCH   3
-// #define ROLL    4
-// #define VRA     5
-// #define VRB     6
-// #define SWA     7
-// #define SWB     8
-// #define SWC     9
-// #define SWD     10
-
-
+/******************************************************************************
+ *  This class represents FlySky receiver for remote control.
+ *  Implements IReceiver interface.
+ *
+ *  You can calibrate four main channels to calculate offsets.
+ *****************************************************************************/
 class FlySkyReceiver : public IReceiver
 {
  public:
 
-    FlySkyReceiver(const std::vector<uint8_t> &pins);
+     /**
+      * Constructor.
+      * It is important to keep the correct pins order.
+      *
+      * @param pins vector of connected pins to receiver
+      */
+     FlySkyReceiver(const std::vector<uint8_t> &pins);
 
-    ~FlySkyReceiver();
+     /**
+      * Destructor.
+      */
+     ~FlySkyReceiver();
 
-    uint16_t ReadChannel(uint8_t channel_number) const override;
+     /**
+      * Returns the pulse length of the PWM signal for specific channel.
+      *
+      * @param channel_number   channel number to read
+      *
+      * @return the pulse length of the PWM signal for specific channel
+      */
+     uint16_t ReadChannel(uint8_t channel_number) const override;
 
-    bool Calibrate() override;
+     /**
+      * Calibrates receiver and calculate offsets for four important channels.
+      *
+      * @return true if the calibration was successful
+      */
+     bool Calibrate() override;
 
-    bool IsCalibrated() const override;
+     /**
+      * Returns true if receiver is calibrated.
+      *
+      * @return true if receiver is calibrated
+      */
+     bool IsCalibrated() const override;
 
-
-private:
-
-    bool IsReadyToCalibrate();
 
  private:
-     
-    const uint8_t channel_count_;
 
-    PWMPinListener** pwm_pin_listeners_;
+     /**
+      * Checks the readiness of the receiver for calibration.
+      *
+      * @return true if receiver is ready to calibrate
+      */
+     bool IsReadyToCalibrate();
 
-    int16_t* channels_offsets_;
+ private:
 
-    bool is_calibrated_;
+     /**
+      * All channel count.
+      */
+     const uint8_t channel_count_;
+
+     /**
+      * Instances of PWMPinListener.
+      */
+     PWMPinListener** pwm_pin_listeners_;
+
+     /**
+      * Offsets for important channels.
+      */
+     int16_t* channels_offsets_;
+
+     /**
+      * Calibration success.
+      */
+     bool is_calibrated_;
 };
 
 }

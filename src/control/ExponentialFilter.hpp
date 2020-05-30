@@ -2,26 +2,26 @@
 #define EXPONENTIAL_FILTER_HPP
 
 
-/**
+/******************************************************************************
  *  Generic class which implements basic exponential filter.
  *  Its behaviour is like low pass filter.
  *  It attenuates signals with high frequencies.
- */
+ *****************************************************************************/
 template<typename T> class ExponentialFilter
 {
 public:
+
     /**
      *  Constructor.
      *
      *  @param weight       Weight of filtering. In range [0, 100].
-                            Lower value means better smoothing.
+     *                      Lower value means better smoothing.
      *  @param init_value   Initialization value for start smoothing
      */
     ExponentialFilter(T weight, T init_value) :
         weight_(constrain(weight, 0.0, 100.0) / 100.0),
         smooth_value_(init_value)
     {
-
     }
 
     /**
@@ -92,7 +92,6 @@ private:
      *  Filtered (smoothed) value.
      */
     T smooth_value_;
-
 };
 
 #endif

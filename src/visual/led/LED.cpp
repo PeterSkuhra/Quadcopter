@@ -1,10 +1,13 @@
 #include "LED.hpp"
 
+#define DEFAULT_ON_TIME     500
+#define DEFAULT_OFF_TIME    500
+
 visual::led::LED::LED(uint8_t pin) :
     pin_(pin),
     led_state_(false),
-    on_time_ms_(500),
-    off_time_ms_(500)
+    on_time_ms_(DEFAULT_ON_TIME),
+    off_time_ms_(DEFAULT_OFF_TIME)
 {
     pinMode(pin_, OUTPUT);
 }

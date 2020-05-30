@@ -6,12 +6,16 @@
 namespace control
 {
 
+/******************************************************************************
+ *  Class for PID controller. Implements basic formula of PID.
+ *  You can set all gains, output limit and set reverse output.
+ *****************************************************************************/
 class PID
 {
 public:
+
     /**
      *  Constructor.
-     *
      *
      *  @param p_gain   P gain value
      *  @param i_gain   I gain value
@@ -61,7 +65,7 @@ public:
     float GetOutputLimit() const;
 
     /**
-     *  Structure for PID gains.
+     *  Structure for PID parts.
      */
     struct PIDData
     {
@@ -73,14 +77,39 @@ public:
 
 private:
 
+    /**
+     *  Structure of PID gains.
+     */
     PIDData gains_;
+
+    /**
+     *  Structire of PID outputs.
+     */
     PIDData outputs_;
 
+    /**
+     *  Previous setpoint to control.
+     */
     float prev_setpoint_;
+
+    /**
+     *  Previous process output.
+     */
     float prev_process_;
+
+    /**
+     *  Previous time.
+     */
     uint32_t prev_time_;
 
+    /**
+     *  Maximal and minimal limit of output.
+     */
     float output_limit_;
+
+    /**
+     *  Reverse output.
+     */
     bool reverse_output_;
 };
 
