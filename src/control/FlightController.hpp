@@ -237,7 +237,6 @@ private:
      */
     RotaryMotion<PID*> pid_controller_;
 
-
     /**
      *  Structure for receiver data.
      */

@@ -6,8 +6,9 @@
 #include <EnableInterrupt.h>
 
 
-//=============================================================================
-
+/**
+ *  Declarations of 10 interrupt routines.
+ */
 static void HandleInterrupt1();
 static void HandleInterrupt2();
 static void HandleInterrupt3();
@@ -19,9 +20,15 @@ static void HandleInterrupt8();
 static void HandleInterrupt9();
 static void HandleInterrupt10();
 
+/**
+ *  Function pointer for interrupt routine.
+ */
 typedef void (*isr_p)(void);
 
-static const std::vector<isr_p> isr_functions{
+/**
+ *  Vector of function pointers for interrupt routines.
+ */
+static const std::vector<isr_p> isr_functions {
     &HandleInterrupt1,
     &HandleInterrupt2,
     &HandleInterrupt3,
@@ -34,8 +41,12 @@ static const std::vector<isr_p> isr_functions{
     &HandleInterrupt10
 };
 
+/**
+ *  Vector of PWMPinListener instances
+ */
 static std::vector<command::PWMPinListener*> instances;
-//=============================================================================
+
+
 
 command::PWMPinListener::PWMPinListener(uint8_t pin) :
     pin_(pin),
@@ -84,8 +95,9 @@ void command::PWMPinListener::HandleInterrupt()
 }
 
 
-//=============================================================================
-
+/******************************************************************************
+ *  Definitions of 10 interrupt routines.
+ *****************************************************************************/
 static void HandleInterrupt1()
 {
     instances.at(0)->HandleInterrupt();
