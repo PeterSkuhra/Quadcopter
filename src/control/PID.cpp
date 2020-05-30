@@ -26,8 +26,6 @@ float control::PID::Update(float setpoint, float process)
 
     outputs_.p = kError * gains_.p;
     outputs_.i = (outputs_.i + (kError * elapsed_time)) * gains_.i;
-    // outputs_.i += (kError * gains_.i);           // POZOR, robi blbosti!!!!!!!!!!!!!!!!!!!!
-    // outputs_.d = ((kError - kPrevError) / elapsed_time) * gains_.d;
     outputs_.d = (kError - kPrevError) * gains_.d;
 
     prev_setpoint_ = setpoint;

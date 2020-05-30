@@ -40,7 +40,7 @@ void esc::ESC30A::SetSpeed(uint16_t speed)
     WritePWM12bit(pin_, speed_ * 2);
 }
 
-// TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// NOT ENOUGHT TESTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 void esc::ESC30A::SetSpeed(uint16_t speed, float battery_voltage)
 {
     speed_ = constrain(speed, MIN_PULSE, MAX_PULSE);

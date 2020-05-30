@@ -160,7 +160,7 @@ void control::FlightController::InitPID()
     pid_controller_.angular_rate.z = new PID(pid_gains_.angular_rate.z.p,
                                              pid_gains_.angular_rate.z.i,
                                              pid_gains_.angular_rate.z.d,
-                                             300);
+                                             300, true);
 
     pid_controller_.angle.roll = new PID(pid_gains_.angle.roll.p,
                                          pid_gains_.angle.roll.i,
@@ -319,7 +319,7 @@ void control::FlightController::ReadIMUData()
         imu_data_.angular_rate.y = imu_->GetYAngularRate();
         imu_data_.angular_rate.z = imu_->GetZAngularRate();
 
-        imu_data_.angle.yaw = imu_->GetYawAngle();  // netreba
+        // imu_data_.angle.yaw = imu_->GetYawAngle();  // not used
         imu_data_.angle.pitch = imu_->GetPitchAngle();
         imu_data_.angle.roll = imu_->GetRollAngle();
 
@@ -344,56 +344,11 @@ void control::FlightController::ReadIMUData()
 void control::FlightController::PIDCalculation()
 {
     if (receiver_->ReadChannel(1) > 1050) {
-
         if (automatic_stabilization_) {
-
-            if (pid_out_step_ >= 4) {
-                pid_out_step_ = 0;
-
-                // Outer PID loop
-                pid_data_.angle.roll = pid_controller_.angle.roll->Update(
-                    receiver_data_.roll,
-                    imu_data_.angle.roll);
-
-                pid_data_.angle.pitch = pid_controller_.angle.pitch->Update(
-                    receiver_data_.pitch,
-                    imu_data_.angle.pitch);
-            }
-
-            //Inner PID loop
-            pid_data_.angular_rate.x = pid_controller_.angular_rate.x->Update(
-                pid_data_.angle.roll,
-                imu_data_.angular_rate.x);
-
-            pid_data_.angular_rate.y = pid_controller_.angular_rate.y->Update(
-                pid_data_.angle.pitch,
-                imu_data_.angular_rate.y);
-
-            pid_out_step_++;
-
-
-            // Yaw only angular rate PID
-            pid_data_.angular_rate.z = pid_controller_.angular_rate.z->Update(
-                receiver_data_.yaw,
-                imu_data_.angular_rate.z);
-            // pid_data_.angular_rate.y = -pid_data_.angular_rate.y;
-            pid_data_.angular_rate.z = -pid_data_.angular_rate.z;   // TODO in PID class!!!!!!!!!!!!!!!!!!!
+            this->CascadePID();
         }
         else {
-            pid_data_.angular_rate.x = pid_controller_.angular_rate.x->Update(
-                receiver_data_.roll,            // setpoint
-                imu_data_.angular_rate.x);      // process
-
-            pid_data_.angular_rate.y = pid_controller_.angular_rate.y->Update(
-                receiver_data_.pitch,
-                imu_data_.angular_rate.y);
-
-            pid_data_.angular_rate.z = pid_controller_.angular_rate.z->Update(
-                receiver_data_.yaw,
-                imu_data_.angular_rate.z);
-
-            // pid_data_.angular_rate.y = -pid_data_.angular_rate.y;
-            pid_data_.angular_rate.z = -pid_data_.angular_rate.z;   // TODO in PID class!!!!!!!!!!!!!!!!!!!
+            this->RatePID();
         }
     }
     else {
@@ -405,6 +360,61 @@ void control::FlightController::PIDCalculation()
         pid_data_.angle.pitch = 0;
         pid_data_.angle.yaw = 0;
     }
+}
+
+void control::FlightController::CascadePID()
+{
+    if (pid_out_step_ >= 4) {
+        pid_out_step_ = 0;
+
+        this->OuterPID();
+    }
+
+    this->InnerPID();
+
+    pid_out_step_++;
+}
+
+void control::FlightController::InnerPID()
+{
+    pid_data_.angular_rate.x = pid_controller_.angular_rate.x->Update(
+        pid_data_.angle.roll,
+        imu_data_.angular_rate.x);
+
+    pid_data_.angular_rate.y = pid_controller_.angular_rate.y->Update(
+        pid_data_.angle.pitch,
+        imu_data_.angular_rate.y);
+
+    // Yaw have only angular rate PID
+    pid_data_.angular_rate.z = pid_controller_.angular_rate.z->Update(
+        receiver_data_.yaw,
+        imu_data_.angular_rate.z);
+}
+
+void control::FlightController::OuterPID()
+{
+    pid_data_.angle.roll = pid_controller_.angle.roll->Update(
+        receiver_data_.roll,
+        imu_data_.angle.roll);
+
+    pid_data_.angle.pitch = pid_controller_.angle.pitch->Update(
+        receiver_data_.pitch,
+        imu_data_.angle.pitch);
+}
+
+void control::FlightController::RatePID()
+{
+    pid_data_.angular_rate.x = pid_controller_.angular_rate.x->Update(
+        receiver_data_.roll,
+        imu_data_.angular_rate.x);
+
+    pid_data_.angular_rate.y = pid_controller_.angular_rate.y->Update(
+        receiver_data_.pitch,
+        imu_data_.angular_rate.y);
+
+    pid_data_.angular_rate.z = pid_controller_.angular_rate.z->Update(
+        receiver_data_.yaw,
+        imu_data_.angular_rate.z);
 }
 
 void control::FlightController::CalculateMotorsSpeeds()

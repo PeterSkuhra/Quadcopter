@@ -145,6 +145,26 @@ private:
     void PIDCalculation();
 
     /**
+     *  Calculates cascade PID controller.
+     */
+    void CascadePID();
+
+    /**
+     *  Inner loop PID controller.
+     */
+    void InnerPID();
+
+    /**
+     *  Outer loop PID controller.
+     */
+    void OuterPID();
+
+    /**
+     *  Calculates standard PID controller with angular rates.
+     */
+    void RatePID();
+
+    /**
      *  Calculations of motor speeds.
      */
     void CalculateMotorsSpeeds();

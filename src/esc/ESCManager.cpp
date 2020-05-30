@@ -33,7 +33,6 @@ void esc::ESCManager::SetSpeeds(std::vector<int16_t> &speeds)
         motors_[i]->SetSpeed(speeds[i]);
         // motors_[i]->SetSpeed(speeds[i], voltage_sensor_->GetAnalogValue());
     }
-    // Serial.println("Vol: " + String(voltage_sensor_->GetAnalogValue()));
 }
 
 bool esc::ESCManager::Calibrate()
